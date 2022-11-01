@@ -24,7 +24,7 @@ public:
 	* @param height is the vertical size of the board
 	*/
 	Board(size_t width, size_t height)
-		: width(width), height(height) {}
+		: width(width), height(height) { }
 		
 	/**
 	 * Because this is a pure virtual class, we should declare 
@@ -33,22 +33,13 @@ public:
 	virtual ~Board() {}
 
 	/**
-	* Get the liveliness of a specified element.
-	*
-	* @param x is the horizontal position of the element
-	* @param y is the vertical position of the element
-	* @return dead or alive if element exists, else invalid
-	*/
-	virtual enum life_status_t readPos(size_t x,size_t y)=0;
-
-	/**
 	* Sets an element to a life status. Input will be modulo width or height.
 	*
 	* @param x is the horizontal position of the element
 	* @param y is the vertical position of the element
 	* @param status is the life status to be set
 	*/
-	virtual void setPos(size_t x, size_t y,enum life_status_t status)=0;
+	virtual void setPos(size_t x, size_t y, enum life_status_t status)=0;
 
 	/**
 	 * Gets the life status of an element. Input will be modulo width or height.
@@ -56,7 +47,7 @@ public:
 	 * @param x is the horizontal position of the element
 	 * @param y is the vertical position of the element
 	 */
-	virtual life_status_t getPos(size_t x, size_t y) = 0;
+	virtual enum life_status_t getPos(size_t x, size_t y) = 0;
 	
 	/**
 	 * Exports this board to output file.
@@ -79,7 +70,9 @@ public:
 	 */
 	virtual void step() = 0;
 
-private:
+
+
+protected:
 	/**
 	 * Sets an element to a life status. Invalid inputs will be discarded.
 	 *
@@ -87,7 +80,7 @@ private:
 	 * @param y is the vertical position of the element
 	 * @param status is the life status to be set
 	 */
-	virtual void setPosRaw(size_t x, size_t y, enum life_status_t status)=0;
+	virtual void setPosRaw(size_t x, size_t y, enum life_status_t status) = 0;
 
 	/**
 	 * Gets the life status of an element. Invalid inputs will return invalid.
@@ -95,14 +88,13 @@ private:
 	 * @param x is the horizontal position of the element
 	 * @param y is the vertical position of the element
 	 */
-	virtual life_status_t getPosRaw(size_t x, size_t y) = 0;
+	virtual enum life_status_t getPosRaw(size_t x, size_t y) = 0;
 
-
-
-protected:
 	size_t height;
 	size_t width;
-	std::vector<life_status_t> field;
+	// 1-Dimensional representation of the field (y * width + x, to access (x,y))
+	std::vector<enum life_status_t> field;
+	
 };
 
 #endif
