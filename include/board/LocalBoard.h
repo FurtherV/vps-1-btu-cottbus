@@ -21,7 +21,7 @@ class LocalBoard : Board
          * Because this is a pure virtual class, we should declare
          * the destructor also as virtual.
          */
-        virtual ~LocalBoard() {}
+        ~LocalBoard() {}
 
         /**
          * Get the liveliness of a specified element.
@@ -30,7 +30,7 @@ class LocalBoard : Board
          * @param y is the vertical position of the element
          * @return dead or alive if element exists, else invalid
          */
-        virtual enum life_status_t getPos(int x, int y) = 0;
+        enum life_status_t getPos(int x, int y);
 
         /**
          * Sets a element to a life status. If position or status is invalid,
@@ -40,14 +40,15 @@ class LocalBoard : Board
          * @param y is the vertical position of the element
          * @param status is the life status to be set
          */
-        virtual void setPos(int x, int y, enum life_status_t status) = 0;
+        void setPos(int x, int y, enum life_status_t status);
+        
         /**
          * Exports this board to output file.
          *
          * @return true, if successful
          * @return false, else
          */
-        virtual bool exportAll(std::string destFileName) = 0;
+        bool exportAll(std::string destFileName);
 
         /**
          * Imports to this board from output file.
@@ -55,16 +56,16 @@ class LocalBoard : Board
          * @return true
          * @return false
          */
-        virtual bool importAll(std::string sourceFileName) = 0;
+        bool importAll(std::string sourceFileName);
 
         /**
          * Performs one step on this board.
          */
-        virtual void step() = 0;
+        void step();
 
-        virtual int getWidth() = 0;
+        int getWidth();
 
-        virtual int getHeight() = 0;
+        int getHeight();
 
     protected:
         /**
@@ -74,7 +75,7 @@ class LocalBoard : Board
          * @param y is the vertical position of the element
          * @param status is the life status to be set
          */
-        virtual void setPosRaw(int x, int y, enum life_status_t status) = 0;
+        void setPosRaw(int x, int y, enum life_status_t status);
 
         /**
          * Gets the life status of an element. Invalid inputs will return invalid.
@@ -82,7 +83,7 @@ class LocalBoard : Board
          * @param x is the horizontal position of the element
          * @param y is the vertical position of the element
          */
-        virtual enum life_status_t getPosRaw(int x, int y) = 0;
+        enum life_status_t getPosRaw(int x, int y);
 
         // 1-Dimensional representation of the field (y * width + x, to access (x,y))
         std::vector<enum life_status_t> field;
