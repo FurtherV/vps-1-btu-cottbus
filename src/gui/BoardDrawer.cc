@@ -6,6 +6,7 @@ BoardDrawer::BoardDrawer(GUI::DrawingWindow *drawingWindow, Board *board) : draw
     drawingWindow->setBackgroundColor(GUI::BLACK);
     drawingWindow->setForegroundColor(GUI::WHITE);
     drawingWindow->clear();
+
     calculateSizes();
 }
 
@@ -34,6 +35,9 @@ void BoardDrawer::calculateSizes()
 
 void BoardDrawer::draw()
 {
+    if (drawingWindow->isDestroyed())
+        return;
+
     drawingWindow->clear();
     size_t rows = boardHeight;
     size_t columns = boardWidth;
