@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <X11/Xutil.h>
+#include <X11/Xlib.h>
 #include "gui/DrawingWindow.h"
 #include "misc/debug.h"
 
@@ -87,7 +88,7 @@ DrawingWindow::DrawingWindow(unsigned int width, unsigned int height, string nam
 
 	// create the context
 	graphicsContext = XCreateGC(display, window, valueMask, &values);
-	if (graphicsContext < 0)
+	if (reinterpret_cast<unsigned long>(graphicsContext) < 0)
 	{
 		cerr << "DrawingWindow::DrawingWindow(..), Error: Could not create graphics context." << endl;
 		exit(0);
@@ -98,7 +99,7 @@ DrawingWindow::DrawingWindow(unsigned int width, unsigned int height, string nam
 
 	// create the context for the pixmap
 	graphicsContextPixmap = XCreateGC(display, pixmap, valueMask, &values);
-	if (graphicsContextPixmap < 0)
+	if (reinterpret_cast<unsigned long>(graphicsContextPixmap) < 0)
 	{
 		cerr << "DrawingWindow::DrawingWindow(..), Error: Could not create graphics context for the pixmap." << endl;
 		exit(0);
@@ -106,7 +107,7 @@ DrawingWindow::DrawingWindow(unsigned int width, unsigned int height, string nam
 
 	// create another context for filling the pixmap
 	graphicsContextPixmapFill = XCreateGC(display, pixmap, valueMask, &values);
-	if (graphicsContextPixmapFill < 0)
+	if (reinterpret_cast<unsigned long>(graphicsContextPixmapFill) < 0)
 	{
 		cerr << "DrawingWindow::DrawingWindow(..), Error: Could not create graphics context for the pixmap for filling." << endl;
 		exit(0);

@@ -42,11 +42,50 @@ public:
 	 * @param y is the vertical position of the element
 	 * @return dead or alive if element exists, else invalid
 	 */
-	virtual enum life_status_t getPos(int x, int y) = 0;
+	virtual enum life_status_t readPos(size_t x, size_t y) = 0;
 
 	/**
-	 * Sets a element to a life status. If position or status is invalid,
-	 * nothing is done.
+	 * Sets an element to a life status. Input will be modulo width or height.
+	 *
+	 * @param x is the horizontal position of the element
+	 * @param y is the vertical position of the element
+	 * @param status is the life status to be set
+	 */
+	virtual void setPos(size_t x, size_t y, enum life_status_t status) = 0;
+
+	/**
+	 * Gets the life status of an element. Input will be modulo width or height.
+	 *
+	 * @param x is the horizontal position of the element
+	 * @param y is the vertical position of the element
+	 * @return dead or alive if element exists, else invalid
+	 */
+	virtual life_status_t getPos(size_t x, size_t y) = 0;
+
+	/**
+	 * Exports this board to output file.
+	 *
+	 * @return true, if successful
+	 * @return false, else
+	 */
+	virtual bool exportAll(std::string destFileName) = 0;
+
+	/**
+	 * Imports to this board from output file.
+	 *
+	 * @return true
+	 * @return false
+	 */
+	virtual bool importAll(std::string sourceFileName) = 0;
+
+	/**
+	 * Performs one step on this board.
+	 */
+	virtual void step() = 0;
+
+private:
+	/**
+	 * Sets an element to a life status. Invalid inputs will be discarded.
 	 *
 	 * @param x is the horizontal position of the element
 	 * @param y is the vertical position of the element
