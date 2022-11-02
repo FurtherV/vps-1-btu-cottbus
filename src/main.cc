@@ -1,4 +1,6 @@
 #include "gui/DrawingWindow.h"
+#include "board/LocalBoard.h"
+#include "gui/BoardDrawer.h"
 
 using namespace std;
 using namespace GUI;
@@ -7,12 +9,11 @@ int main(int argc, char *argv[])
 {
 	// example code for using the DrawingWindow class
 
-	DrawingWindow window(800, 600, "Game of Life");
-	// DrawingWindow window(800, 600, "Game of Life", true, true);
-	window.setForegroundColor(RGBColor(255, 0, 0));
-	window.drawRectangle(100, 100, 75, 150);
-	window.setForegroundColor(LIME);
-	window.drawLine(0, 0, 100, 100);
+	DrawingWindow window(1000, 1000, "Game of Life");
+	LocalBoard board(100, 100);
+	BoardDrawer drawer(&window, &board);
+
+	drawer.draw();
 
 	// run until user presses q on console
 	char input = ' ';
