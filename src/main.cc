@@ -5,6 +5,7 @@
 
 #include "gui/DrawingWindow.h"
 #include "board/LocalBoard.h"
+#include "gui/BoardDrawer.h"
 
 using namespace std;
 using namespace GUI;
@@ -45,10 +46,10 @@ int main(int argc, char *argv[])
 	}
 
 	LocalBoard board(0, 0);
+	board.importAll(input_path);
 
-	auto *localBoard = new LocalBoard(0, 0);
-
-	localBoard->importAll(input_path);
+	DrawingWindow window(800, 800, "Game of Life");
+	BoardDrawer drawer(&window, &board);
 
 	std::cout << "sad" << input_path << endl;
 	return 0;
