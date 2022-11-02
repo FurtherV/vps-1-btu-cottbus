@@ -21,6 +21,7 @@ void LocalBoard::setPos(int x, int y, enum life_status_t status)
     }
     LocalBoard::setPosRaw(x % width, y % height, status);
 }
+
 enum life_status_t LocalBoard::getPos(int x, int y)
 {
     while (x < 0)
@@ -33,6 +34,7 @@ enum life_status_t LocalBoard::getPos(int x, int y)
     }
     return LocalBoard::getPosRaw(x % width, y % height);
 }
+
 void LocalBoard::step()
 {
     std::vector<enum life_status_t> newField;
@@ -82,6 +84,7 @@ void LocalBoard::setPosRaw(int x, int y, enum life_status_t status)
 {
     field[y * width + x] = status;
 }
+
 enum life_status_t LocalBoard::getPosRaw(int x, int y)
 {
     return field[y * width + x];
