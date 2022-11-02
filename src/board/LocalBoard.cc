@@ -1,12 +1,19 @@
 #include <sys/types.h>
 #include <vector>
 #include <string>
-#include <LocalBoard.h>
 #include <fstream>
 #include <iostream>
-#include "LocalBoard.h"
+#include "board/LocalBoard.h"
 
-void LocalBoard::setPos(size_t x, size_t y, enum life_status_t status)
+LocalBoard::LocalBoard(int width, int height) : Board(width, height)
+{
+}
+
+LocalBoard::~LocalBoard()
+{
+}
+
+void LocalBoard::setPos(int x, int y, enum life_status_t status)
 {
     while (x < 0)
     {
@@ -19,7 +26,7 @@ void LocalBoard::setPos(size_t x, size_t y, enum life_status_t status)
     LocalBoard::setPosRaw(x % width, y % height, status);
 }
 
-enum life_status_t LocalBoard::getPos(size_t x, size_t y)
+enum life_status_t LocalBoard::getPos(int x, int y)
 {
     while (x < 0)
     {
@@ -77,12 +84,12 @@ void LocalBoard::step()
     }
 }
 
-void LocalBoard::setPosRaw(size_t x, size_t y, enum life_status_t status)
+void LocalBoard::setPosRaw(int x, int y, enum life_status_t status)
 {
     field[y * width + x] = status;
 }
 
-enum life_status_t LocalBoard::getPosRaw(size_t x, size_t y)
+enum life_status_t LocalBoard::getPosRaw(int x, int y)
 {
     return field[y * width + x];
 }
@@ -135,12 +142,12 @@ bool LocalBoard::importAll(std::string sourceFileName)
 
     std::ifstream BoardFile(sourceFileName);
 
-    size_t line_number = 0;
+    int line_number = 0;
     std::string line;
     while (getline(BoardFile, line))
     {
         //        std::cout << line << std::endl;
-        size_t line_length = line.length();
+        int line_length = (int)line.length();
 
         if (line_length < 1 or line[0] == '#')
         {
@@ -240,4 +247,14 @@ bool LocalBoard::importAll(std::string sourceFileName)
 
     BoardFile.close();
     return true;
+}
+
+int LocalBoard::getWidth()
+{
+    return width;
+}
+
+int LocalBoard::getHeight()
+{
+    return height;
 }

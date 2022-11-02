@@ -24,15 +24,6 @@ public:
     ~LocalBoard();
 
     /**
-     * Get the liveliness of a specified element.
-     *
-     * @param x is the horizontal position of the element
-     * @param y is the vertical position of the element
-     * @return dead or alive if element exists, else invalid
-     */
-    enum life_status_t getPos(int x, int y) override;
-
-    /**
      * Sets a element to a life status. If position or status is invalid,
      * nothing is done.
      *
@@ -41,6 +32,15 @@ public:
      * @param status is the life status to be set
      */
     void setPos(int x, int y, enum life_status_t status) override;
+
+    /**
+     * Get the liveliness of a specified element.
+     *
+     * @param x is the horizontal position of the element
+     * @param y is the vertical position of the element
+     * @return dead or alive if element exists, else invalid
+     */
+    life_status_t getPos(int x, int y) override;
 
     /**
      * Exports this board to output file.

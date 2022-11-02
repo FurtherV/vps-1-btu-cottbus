@@ -1,10 +1,10 @@
-#include "gui/DrawingWindow.h"
-#include "LocalBoard.h"
-
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <getopt.h>
+
+#include "gui/DrawingWindow.h"
+#include "board/LocalBoard.h"
 
 using namespace std;
 using namespace GUI;
@@ -44,28 +44,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	LocalBoard board(0, 0);
+
 	auto *localBoard = new LocalBoard(0, 0);
 
 	localBoard->importAll(input_path);
 
 	std::cout << "sad" << input_path << endl;
-
-	// example code for using the DrawingWindow class
-
-	//    DrawingWindow window(800, 600, "Game of Life");
-	//    // DrawingWindow window(800, 600, "Game of Life", true, true);
-	//    window.setForegroundColor(RGBColor(255, 0, 0));
-	//    window.drawRectangle(100, 100, 75, 150);
-	//    window.setForegroundColor(LIME);
-	//    window.drawLine(0, 0, 100, 100);
-	//
-	//    // run until user presses q on console
-	//    char input = ' ';
-	//    while (input != 'q') {
-	//        cout << "Press q and enter to quit" << endl;
-	//        cin >> input;
-	//        cout << "read: '" << input << "' from console" << endl;
-	//    }
-
 	return 0;
 }
