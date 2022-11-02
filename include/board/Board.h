@@ -21,9 +21,9 @@ public:
 	* @param width is the horizontal size of the board
 	* @param height is the vertical size of the board
 	*/
-	Board(size_t width, size_t height)
+	Board(int width, int height)
 		: width(width), height(height) {}
-		
+
 	/**
 	 * Because this is a pure virtual class, we should declare 
 	 * the destructor also as virtual.
@@ -37,7 +37,7 @@ public:
 	* @param y is the vertical position of the element
 	* @return dead or alive if element exists, else invalid
 	*/
-	virtual enum life_status_t getPos(size_t x,size_t y)=0;
+	virtual enum life_status_t getPos(int x, int y) = 0;
 
 	/**
 	* Sets a element to a life status. If position or status is invalid,
@@ -47,11 +47,11 @@ public:
 	* @param y is the vertical position of the element
 	* @param status is the life status to be set
 	*/
-	virtual void setPos(size_t x, size_t y,enum life_status_t status)=0;
+	virtual void setPos(int x, int y, enum life_status_t status) = 0;
 
 protected:
-	size_t height;
-	size_t width;
+	int height;
+	int width;
 
 };
 

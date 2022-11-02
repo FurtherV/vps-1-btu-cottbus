@@ -3,7 +3,7 @@
 #include <string>
 #include <LocalBoard.h>
 
-void LocalBoard::setPos(size_t x, size_t y, enum life_status_t status)
+void LocalBoard::setPos(int x, int y, enum life_status_t status)
 {
     while (x < 0)
     {
@@ -15,7 +15,7 @@ void LocalBoard::setPos(size_t x, size_t y, enum life_status_t status)
     }
     LocalBoard::setPosRaw(x % width, y % height, status);
 }
-enum life_status_t LocalBoard::getPos(size_t x, size_t y)
+enum life_status_t LocalBoard::getPos(int x, int y)
 {
     while (x < 0)
     {
@@ -69,11 +69,21 @@ void LocalBoard::step()
     }
 }
 
-void LocalBoard::setPosRaw(size_t x, size_t y, enum life_status_t status)
+void LocalBoard::setPosRaw(int x, int y, enum life_status_t status)
 {
     field[y * width + x] = status;
 }
-enum life_status_t LocalBoard::getPosRaw(size_t x, size_t y)
+enum life_status_t LocalBoard::getPosRaw(int x, int y)
 {
     return field[y * width + x];
+}
+
+int LocalBoard::getWidth()
+{
+    return width;
+}
+
+int LocalBoard::getHeight()
+{
+    return height;
 }
