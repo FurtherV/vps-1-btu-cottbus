@@ -1,7 +1,13 @@
 #include <sys/types.h>
 #include <vector>
 #include <string>
-#include <LocalBoard.h>
+#include <board/LocalBoard.h>
+
+LocalBoard::LocalBoard(int width, int height) : Board(width, height) {}
+
+LocalBoard::~LocalBoard()
+{
+}
 
 void LocalBoard::setPos(int x, int y, enum life_status_t status)
 {
@@ -40,7 +46,8 @@ void LocalBoard::step()
             {
                 for (int dy = -1; dy <= 1; dy++)
                 {
-                    if(dx != 0 && dy != 0){
+                    if (dx != 0 && dy != 0)
+                    {
                         if (getPos(x + dx, y + dy) == life_status_t::alive)
                         {
                             neighbourCount++;
@@ -48,14 +55,16 @@ void LocalBoard::step()
                     }
                 }
             }
-            if(status == life_status_t::dead && neighbourCount == 3)
+            if (status == life_status_t::dead && neighbourCount == 3)
             {
                 newField.push_back(life_status_t::alive);
             }
-            else if(status == life_status_t::alive && neighbourCount >= 2 && neighbourCount <= 3)
+            else if (status == life_status_t::alive && neighbourCount >= 2 && neighbourCount <= 3)
             {
                 newField.push_back(life_status_t::alive);
-            }else{
+            }
+            else
+            {
                 newField.push_back(life_status_t::dead);
             }
         }
