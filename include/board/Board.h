@@ -25,9 +25,9 @@ public:
 	*/
 	Board(size_t width, size_t height)
 		: width(width), height(height) {}
-		
+
 	/**
-	 * Because this is a pure virtual class, we should declare 
+	 * Because this is a pure virtual class, we should declare
 	 * the destructor also as virtual.
 	 */
 	virtual ~Board() {}
@@ -39,7 +39,7 @@ public:
 	* @param y is the vertical position of the element
 	* @return dead or alive if element exists, else invalid
 	*/
-	virtual enum life_status_t readPos(size_t x,size_t y)=0;
+	virtual enum life_status_t readPos(size_t x,size_t y);
 
 	/**
 	* Sets an element to a life status. Input will be modulo width or height.
@@ -57,15 +57,15 @@ public:
 	 * @param y is the vertical position of the element
 	 */
 	virtual life_status_t getPos(size_t x, size_t y) = 0;
-	
+
 	/**
 	 * Exports this board to output file.
-	 * 
-	 * @return true, if successful 
+	 *
+	 * @return true, if successful
 	 * @return false, else
 	 */
 	virtual bool exportAll(std::string destFileName) = 0;
-	
+
 	/**
 	 * Imports to this board from output file.
 	 *
