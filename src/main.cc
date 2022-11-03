@@ -52,6 +52,11 @@ int main(int argc, char *argv[])
 		case 'r':
 			if (optarg != NULL)
 				steps = atoi(optarg);
+			if (steps < 0)
+			{
+				cout << "[ERROR] GoL does not support negative step sizes." << endl;
+				return 1;
+			}
 			break;
 		case 'g':
 			graphical = true;
