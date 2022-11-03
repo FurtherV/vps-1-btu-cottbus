@@ -46,7 +46,6 @@ enum life_status_t LocalBoard::getPos(int x, int y)
 
 void LocalBoard::step()
 {
-    std::printf("[DEBUG] WIDTH = %i, HEIGHT = %i\n", width, height);
     std::vector<enum life_status_t> newField = std::vector<life_status_t>(width * height, life_status_t::dead);
     for (int x = 0; x < width; x++)
     {
