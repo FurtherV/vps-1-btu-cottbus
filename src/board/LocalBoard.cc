@@ -46,7 +46,8 @@ enum life_status_t LocalBoard::getPos(int x, int y)
 
 void LocalBoard::step()
 {
-    std::vector<enum life_status_t> newField;
+    std::printf("[DEBUG] WIDTH = %i, HEIGHT = %i\n", width, height);
+    std::vector<enum life_status_t> newField = std::vector<life_status_t>(width * height, life_status_t::dead);
     for (int x = 0; x < width; x++)
     {
         for (int y = 0; y < height; y++)
@@ -57,7 +58,7 @@ void LocalBoard::step()
             {
                 for (int dy = -1; dy <= 1; dy++)
                 {
-                    if (dx != 0 && dy != 0)
+                    if (dx != 0 || dy != 0)
                     {
                         if (getPos(x + dx, y + dy) == life_status_t::alive)
                         {
@@ -68,15 +69,18 @@ void LocalBoard::step()
             }
             if (status == life_status_t::dead && neighbourCount == 3)
             {
-                newField.push_back(life_status_t::alive);
+                newField[y * width + x] = life_status_t::alive;
+                // newField.push_back(life_status_t::alive);
             }
-            else if (status == life_status_t::alive && neighbourCount >= 2 && neighbourCount <= 3)
+            else if (status == life_status_t::alive && (neighbourCount == 2 || neighbourCount == 3))
             {
-                newField.push_back(life_status_t::alive);
+                newField[y * width + x] = life_status_t::alive;
+                // newField.push_back(life_status_t::alive);
             }
             else
             {
-                newField.push_back(life_status_t::dead);
+                newField[y * width + x] = life_status_t::dead;
+                // newField.push_back(life_status_t::dead);
             }
         }
     }
@@ -114,7 +118,7 @@ bool LocalBoard::exportAll(std::string destFileName)
             else
                 OutBoardFile << "b";
         }
-        OutBoardFile << std::endl;
+        OutBoardFile << "$" << std::endl;
     }
 
     OutBoardFile.close();
@@ -149,7 +153,8 @@ bool LocalBoard::importAll(std::string sourceFileName)
 
     std::ifstream BoardFile(sourceFileName);
 
-    int line_number = 0;
+    int written_cells_this_line = 0;
+    int line_number = -1;
     std::string line;
     while (getline(BoardFile, line))
     {
@@ -158,11 +163,10 @@ bool LocalBoard::importAll(std::string sourceFileName)
 
         if (line_length < 1 or line[0] == '#')
         {
-            --line_number;
             continue;
         }
 
-        if (line_number == 0)
+        if (line_number == -1)
         {
             int x_size = -1, y_size = -1;
 
@@ -175,7 +179,7 @@ bool LocalBoard::importAll(std::string sourceFileName)
                         ;
                     x_size = std::stoi(line.substr(read_start_index, read_start_index - cursor));
                 }
-                else if (isdigit(line[cursor]))
+                else if (isdigit(line[cursor]) and y_size == -1)
                 {
                     int read_start_index = cursor;
                     while (isdigit(line[++cursor]))
@@ -187,14 +191,13 @@ bool LocalBoard::importAll(std::string sourceFileName)
             this->width = x_size;
             this->height = y_size;
 
-            --line_number;
-        }
-
-        if (line_number > 1)
-        {
             field.resize(width * height, life_status_t::dead);
 
-            int written_cells = 0;
+            ++line_number;
+        }
+
+        if (line_number >= 0)
+        {
             for (int cursor = 0; cursor < line_length; ++cursor)
             {
                 int number = -1;
@@ -210,15 +213,15 @@ bool LocalBoard::importAll(std::string sourceFileName)
                 {
                     if (number == -1)
                     {
-                        this->setPos(written_cells, line_number, life_status_t::dead);
-                        ++written_cells;
+                        this->setPos(written_cells_this_line, line_number, life_status_t::dead);
+                        ++written_cells_this_line;
                     }
                     else
                     {
                         for (int i = 0; i < number; ++i)
                         {
-                            this->setPos(written_cells, line_number, life_status_t::dead);
-                            ++written_cells;
+                            this->setPos(written_cells_this_line, line_number, life_status_t::dead);
+                            ++written_cells_this_line;
                         }
                     }
                 }
@@ -226,32 +229,36 @@ bool LocalBoard::importAll(std::string sourceFileName)
                 {
                     if (number == -1)
                     {
-                        this->setPos(written_cells, line_number, life_status_t::alive);
-                        ++written_cells;
+                        this->setPos(written_cells_this_line, line_number, life_status_t::alive);
+                        ++written_cells_this_line;
                     }
                     else
                     {
                         for (int i = 0; i < number; ++i)
                         {
-                            this->setPos(written_cells, line_number, life_status_t::alive);
-                            ++written_cells;
+                            this->setPos(written_cells_this_line, line_number, life_status_t::alive);
+                            ++written_cells_this_line;
                         }
                     }
                 }
-            }
 
-            if (written_cells < this->width)
-            {
-                int diff = this->width - written_cells;
-                for (int i = 0; i < diff; ++i)
+                if (line[cursor] == '$')
                 {
-                    this->setPos(written_cells, line_number, life_status_t::dead);
-                    ++written_cells;
+                    if (written_cells_this_line < this->width)
+                    {
+                        int diff = this->width - written_cells_this_line;
+                        for (int i = 0; i < diff; ++i)
+                        {
+                            this->setPos(written_cells_this_line, line_number, life_status_t::dead);
+                            ++written_cells_this_line;
+                        }
+                    }
+                    written_cells_this_line = 0;
+
+                    ++line_number;
                 }
             }
         }
-
-        ++line_number;
     }
 
     BoardFile.close();
