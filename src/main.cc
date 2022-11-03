@@ -45,12 +45,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	LocalBoard board(0, 0);
+	LocalBoard board(100, 100);
 	board.importAll(input_path);
 
 	DrawingWindow window(800, 800, "Game of Life");
-	BoardDrawer drawer(&window, &board);
+	BoardDrawer drawer(&window, &board, false);
+	drawer.draw();
 
+	for (int i = 0; i < 10; i++)
+	{
+		char userInput;
+		cin >> userInput;
+
+		if (userInput == 'q')
+			break;
+		board.step();
+		drawer.draw();
+	}
 	std::cout << "sad" << input_path << endl;
 	return 0;
 }
