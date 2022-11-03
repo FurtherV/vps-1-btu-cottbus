@@ -11,7 +11,7 @@ using namespace std;
 using namespace GUI;
 
 /**
- * @brief The game of life, with an optional graphical representation.
+ * @brief The Game of Life (GoL for short), with an optional graphical representation.
  *
  * @details This program supports the following command line options:
  * -i <FILE> 	=> Loads the given file as a board configuration.
