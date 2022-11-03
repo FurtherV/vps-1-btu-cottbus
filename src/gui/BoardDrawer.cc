@@ -1,7 +1,9 @@
 #include <cmath>
 #include "gui/BoardDrawer.h"
 
-BoardDrawer::BoardDrawer(GUI::DrawingWindow *drawingWindow, Board *board) : drawingWindow(drawingWindow), board(board)
+BoardDrawer::BoardDrawer(GUI::DrawingWindow *drawingWindow, Board *board, bool forceSquareCells) : drawingWindow(drawingWindow),
+                                                                                                   board(board),
+                                                                                                   forceSquareCells(forceSquareCells)
 {
     drawingWindow->setBackgroundColor(GUI::BLACK);
     drawingWindow->setForegroundColor(GUI::WHITE);
@@ -19,22 +21,32 @@ void BoardDrawer::calculateSizes()
 
     if (boardWidth > windowWidth)
     {
-        std::printf("[WARNING] Board width is greater than window width, graphical output might be inaccurate!");
+        std::printf("[WARNING] Board width is greater than window width, graphical output might be inaccurate!\n");
     }
 
     if (boardHeight > windowHeight)
     {
-        std::printf("[WARNING] Board height is greater than window height, graphical output might be inaccurate!");
+        std::printf("[WARNING] Board height is greater than window height, graphical output might be inaccurate!\n");
     }
 
-    float cellWidthPixel = (float)windowWidth / (float)boardWidth;
-    float cellHeightPixel = (float)windowHeight / (float)boardHeight;
-    size_t usedCellSizePixel = (size_t)std::round(std::fmax((float)1, std::fmin(cellWidthPixel, cellHeightPixel)));
-    cellSizePixel = usedCellSizePixel;
+    // calculate how many pixels in width and height each grid cell will be rendered as by dividing the window size by the board size and rounding.
+    // if the window is smaller than the board, we still use 1 pixel, since we can only draw whole pixels.
+    cellWidthPixel = (size_t)std::roundf(std::fmaxf(1, (float)windowWidth / (float)boardWidth));
+    cellHeightPixel = (size_t)std::roundf(std::fmaxf(1, (float)windowHeight / (float)boardHeight));
+
+    if (forceSquareCells)
+    {
+        size_t min = std::min(cellWidthPixel, cellHeightPixel);
+        cellWidthPixel = min;
+        cellHeightPixel = min;
+    }
+
+    std::printf("[INFO] Width: %lupx, Height: %lupx\n", cellWidthPixel, cellHeightPixel);
 }
 
 void BoardDrawer::draw()
 {
+    // check if window is closed
     if (drawingWindow->isDestroyed())
         return;
 
@@ -49,7 +61,7 @@ void BoardDrawer::draw()
             life_status_t cellState = board->getPos(column, row);
             if (cellState == life_status_t::alive)
             {
-                drawingWindow->drawFilledRectangle(row * cellSizePixel, column * cellSizePixel, cellSizePixel, cellSizePixel);
+                drawingWindow->drawFilledRectangle(column * cellWidthPixel, row * cellHeightPixel, cellWidthPixel, cellHeightPixel);
             }
         }
     }
