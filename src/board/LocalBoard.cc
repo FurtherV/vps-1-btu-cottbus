@@ -131,6 +131,8 @@ bool LocalBoard::importAll(std::string sourceFileName)
         this->width = 1 + rand() % 64;
         this->height = 1 + rand() % 64;
 
+        field.resize(width * height, life_status_t::dead);
+
         for (int y = 0; y < this->height; ++y)
         {
             for (int x = 0; x < this->width; ++x)
