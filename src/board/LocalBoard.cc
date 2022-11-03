@@ -5,12 +5,17 @@
 #include <iostream>
 #include "board/LocalBoard.h"
 
-LocalBoard::LocalBoard(int width, int height) : Board(width, height)
+LocalBoard::LocalBoard(int width, int height) : Board(width, height), field(width * height, life_status_t::dead)
 {
+    if (width * height == 0)
+    {
+        std::printf("[WARNING] Board size is 0!");
+    }
 }
 
 LocalBoard::~LocalBoard()
 {
+    field.clear();
 }
 
 void LocalBoard::setPos(int x, int y, enum life_status_t status)
@@ -185,6 +190,8 @@ bool LocalBoard::importAll(std::string sourceFileName)
 
         if (line_number > 1)
         {
+            field.resize(width * height, life_status_t::dead);
+
             int written_cells = 0;
             for (int cursor = 0; cursor < line_length; ++cursor)
             {
