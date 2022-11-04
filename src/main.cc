@@ -20,6 +20,8 @@ using namespace GUI;
  * -g 			=> If set, a GUI will be used.
  * -a			=> If set, Board will be drawn to match aspect ratio of window to board.
  * 				(IE: cells might not be squares).
+ * -w <NUMBER>	=> Sets the windows width, only works when -g is set, default: 800
+ * -h <NUMBER>	=> Sets the windows height, only works when -g is set, default: 800
  *
  * @param argc
  * @param argv
@@ -33,11 +35,13 @@ int main(int argc, char *argv[])
 	string output_path = "";
 
 	int steps = 0;
+	unsigned int windowWidth = 800;
+	unsigned int windowHeight = 800;
 
 	bool graphical = false;
 	bool aspect = false;
 
-	while ((option_val = getopt(argc, argv, ":i:o:r:ga")) != -1)
+	while ((option_val = getopt(argc, argv, ":i:o:r:w:h:ga")) != -1)
 	{
 		switch (option_val)
 		{
@@ -54,7 +58,7 @@ int main(int argc, char *argv[])
 				steps = atoi(optarg);
 			if (steps < 0)
 			{
-				cout << "[ERROR] GoL does not support negative step sizes." << endl;
+				cout << "[ERROR] GoL does not support negative step amounts." << endl;
 				return 1;
 			}
 			break;
@@ -63,6 +67,30 @@ int main(int argc, char *argv[])
 			break;
 		case 'a':
 			aspect = true;
+			break;
+		case 'w':
+			if (optarg != NULL)
+			{
+				int newWindowWidth = atoi(optarg);
+				if (newWindowWidth <= 0)
+				{
+					cout << "[ERROR] GoL GUI does not support zero or negative window sizes." << endl;
+					return 1;
+				}
+				windowWidth = (unsigned int)newWindowWidth;
+			}
+			break;
+		case 'h':
+			if (optarg != NULL)
+			{
+				int newWindowHeight = atoi(optarg);
+				if (newWindowHeight <= 0)
+				{
+					cout << "[ERROR] GoL GUI does not support zero or negative window sizes." << endl;
+					return 1;
+				}
+				windowHeight = (unsigned int)newWindowHeight;
+			}
 			break;
 		default:
 			break;
@@ -84,7 +112,7 @@ int main(int argc, char *argv[])
 
 	if (graphical)
 	{
-		DrawingWindow window(800, 800, "Game of Life");
+		DrawingWindow window(windowWidth, windowHeight, "Game of Life");
 		BoardDrawer drawer(&window, &board, !aspect);
 		drawer.draw();
 
