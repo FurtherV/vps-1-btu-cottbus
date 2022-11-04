@@ -41,7 +41,15 @@ void BoardDrawer::calculateSizes()
         cellHeightPixel = min;
     }
 
-    std::printf("[INFO] Width: %lupx, Height: %lupx\n", cellWidthPixel, cellHeightPixel);
+    std::printf("[INFO] Each cell will be drawn with %lupx wide and %lupx heigh.\n", cellWidthPixel, cellHeightPixel);
+    if (forceSquareCells)
+    {
+        std::printf("[INFO] Square cells are forced.\n");
+    }
+    else
+    {
+        std::printf("[INFO] Square cells are not forced.\n");
+    }
 }
 
 void BoardDrawer::draw()
