@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include "misc/Log.h"
 #include "gui/DrawingWindow.h"
 #include "board/LocalBoard.h"
 #include "gui/BoardDrawer.h"
@@ -29,19 +30,28 @@ using namespace GUI;
  */
 int main(int argc, char *argv[])
 {
+	// Configure logger before usage.
+	LOGCFG = {};
+	LOGCFG.headers = true;
+#ifdef DEBUG_MODE
+	LOGCFG.level = DEBUG;
+#else
+	LOGCFG.level = ERROR;
+#endif
+	// End of configuration.
+
+	LOG(DEBUG) << "Debug mode is enabled.";
 	int option_val = 0;
 
 	string input_path = "RANDOM";
 	string output_path = "";
-
 	int steps = 0;
 	unsigned int windowWidth = 800;
 	unsigned int windowHeight = 800;
 
 	bool graphical = false;
-	bool aspect = false;
 
-	while ((option_val = getopt(argc, argv, ":i:o:r:w:h:ga")) != -1)
+	while ((option_val = getopt(argc, argv, ":i:o:r:w:h:g")) != -1)
 	{
 		switch (option_val)
 		{
@@ -58,15 +68,12 @@ int main(int argc, char *argv[])
 				steps = atoi(optarg);
 			if (steps < 0)
 			{
-				cout << "[ERROR] GoL does not support negative step amounts." << endl;
+				LOG(ERROR) << "GoL does not support negative step amounts.";
 				return 1;
 			}
 			break;
 		case 'g':
 			graphical = true;
-			break;
-		case 'a':
-			aspect = true;
 			break;
 		case 'w':
 			if (optarg != NULL)
@@ -74,7 +81,7 @@ int main(int argc, char *argv[])
 				int newWindowWidth = atoi(optarg);
 				if (newWindowWidth <= 0)
 				{
-					cout << "[ERROR] GoL GUI does not support zero or negative window sizes." << endl;
+					LOG(ERROR) << "GoL GUI does not support zero or negative window sizes.";
 					return 1;
 				}
 				windowWidth = (unsigned int)newWindowWidth;
@@ -86,7 +93,7 @@ int main(int argc, char *argv[])
 				int newWindowHeight = atoi(optarg);
 				if (newWindowHeight <= 0)
 				{
-					cout << "[ERROR] GoL GUI does not support zero or negative window sizes." << endl;
+					LOG(ERROR) << "GoL GUI does not support zero or negative window sizes.";
 					return 1;
 				}
 				windowHeight = (unsigned int)newWindowHeight;
@@ -97,23 +104,29 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (input_path == "RANDOM")
+	if (input_path == "RANDOM" || input_path == "")
 	{
-		cout << "[INFO] No board configuration specified, GoL will use random configuration." << endl;
+		LOG(INFO) << "No board configuration specified, GoL will use a random configuration.";
 	}
 
 	if (output_path == "")
 	{
-		cout << "[INFO] No output file specified, GoL will not write anything to disk." << endl;
+		LOG(INFO) << "No output file specified, GoL will not write anything to disk.";
 	}
 
-	LocalBoard board(3, 3);
-	board.importAll(input_path);
+	LocalBoard board(100, 100);
+	bool importResult = board.importAll(input_path);
+	if (!importResult)
+	{
+		LOG(ERROR) << "Could not import board from file '" << input_path << "'.";
+		LOG(ERROR) << "File might be missing, its content might be malformed or permissions to access it are missing.";
+		return 1;
+	}
 
 	if (graphical)
 	{
 		DrawingWindow window(windowWidth, windowHeight, "Game of Life");
-		BoardDrawer drawer(&window, &board, !aspect);
+		BoardDrawer drawer(&window, &board);
 		drawer.draw();
 
 		cout << "Simulation Step: 0" << endl;
@@ -138,7 +151,12 @@ int main(int argc, char *argv[])
 
 	if (output_path != "")
 	{
-		board.exportAll(output_path);
+		bool exportResult = board.exportAll(output_path);
+		if (!exportResult)
+		{
+			LOG(ERROR) << "Could not export the board to file '" << output_path << "', please check your file system permissions.";
+			return 1;
+		}
 	}
 	cout << "Done." << endl;
 	return 0;

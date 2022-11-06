@@ -4,7 +4,10 @@
 #include <sys/types.h>
 #include <vector>
 #include <string>
-#include <board/Board.h>
+#include <algorithm>
+
+#include "misc/Log.h"
+#include "board/Board.h"
 
 class LocalBoard : public Board
 {
@@ -45,16 +48,14 @@ public:
     /**
      * Exports this board to output file.
      *
-     * @return true, if successful
-     * @return false, else
+     * @return true, if successful, else otherwise.
      */
     bool exportAll(std::string destFileName);
 
     /**
      * Imports to this board from output file.
      *
-     * @return true
-     * @return false
+     * @return true, if successful, else otherwise.
      */
     bool importAll(std::string sourceFileName);
 

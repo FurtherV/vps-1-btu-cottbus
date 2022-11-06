@@ -3,13 +3,15 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+
 #include "board/LocalBoard.h"
 
 LocalBoard::LocalBoard(int width, int height) : Board(width, height), field(width * height, life_status_t::dead)
 {
-    if (width * height == 0)
+    if (width * height <= 0)
     {
-        std::printf("[WARNING] Board size is 0!");
+        throw std::invalid_argument("width or height was negative or zero.");
     }
 }
 
@@ -104,23 +106,23 @@ enum life_status_t LocalBoard::getPosRaw(int x, int y)
 
 bool LocalBoard::exportAll(std::string destFileName)
 {
-    std::ofstream OutBoardFile(destFileName);
+    std::ofstream outBoardFile(destFileName);
 
-    OutBoardFile << "x = " << this->width << ", y = " << this->height << std::endl;
+    outBoardFile << "x = " << this->width << ", y = " << this->height << std::endl;
 
     for (int y = 0; y < this->height; ++y)
     {
         for (int x = 0; x < this->width; ++x)
         {
             if (this->getPos(x, y) == life_status_t::alive)
-                OutBoardFile << "o";
+                outBoardFile << "o";
             else
-                OutBoardFile << "b";
+                outBoardFile << "b";
         }
-        OutBoardFile << "$" << std::endl;
+        outBoardFile << "$" << std::endl;
     }
 
-    OutBoardFile.close();
+    outBoardFile.close();
 
     return true;
 }
@@ -131,9 +133,8 @@ bool LocalBoard::importAll(std::string sourceFileName)
     {
         srand(time(nullptr));
 
-        this->width = 1 + rand() % 64;
-        this->height = 1 + rand() % 64;
-
+        // this->width = 1 + rand() % 64;
+        // this->height = 1 + rand() % 64;
         field.resize(width * height, life_status_t::dead);
 
         for (int y = 0; y < this->height; ++y)
@@ -150,14 +151,15 @@ bool LocalBoard::importAll(std::string sourceFileName)
         return true;
     }
 
-    std::ifstream BoardFile(sourceFileName);
+    std::ifstream boardFile(sourceFileName);
+    if (!boardFile.good())
+        return false;
 
     int written_cells_this_line = 0;
     int line_number = -1;
     std::string line;
-    while (getline(BoardFile, line))
+    while (getline(boardFile, line))
     {
-        //        std::cout << line << std::endl;
         int line_length = (int)line.length();
 
         if (line_length < 1 or line[0] == '#')
@@ -165,26 +167,47 @@ bool LocalBoard::importAll(std::string sourceFileName)
             continue;
         }
 
+        // first line, attempt to parse board sizes
         if (line_number == -1)
         {
-            int x_size = -1, y_size = -1;
+            // remove all spaces in line to make parsing it easier
+            std::string::iterator end_pos = std::remove(line.begin(), line.end(), ' ');
+            line.erase(end_pos, line.end());
 
-            for (int cursor = 0; cursor < line_length; ++cursor)
+            int x_size = -1, y_size = -1;
+            size_t pos = 0;
+            std::string delimiter = ",";
+            std::string token;
+
+            // try catch, because we parse user input directly with std::stoi, which can throw exceptions if its not a number
+            try
             {
-                if (isdigit(line[cursor]) and x_size == -1)
+                while ((pos = line.find(delimiter)) != std::string::npos)
                 {
-                    int read_start_index = cursor;
-                    while (isdigit(line[++cursor]))
-                        ;
-                    x_size = std::stoi(line.substr(read_start_index, read_start_index - cursor));
+                    token = line.substr(0, pos);
+                    if (token.rfind("x=") == 0)
+                    {
+                        token.erase(0, 2);
+                        x_size = std::stoi(token);
+                    }
+                    else if (token.rfind("y=") == 0)
+                    {
+                        token.erase(0, 2);
+                        y_size = std::stoi(token);
+                    }
+
+                    line.erase(0, pos + delimiter.length());
                 }
-                else if (isdigit(line[cursor]) and y_size == -1)
-                {
-                    int read_start_index = cursor;
-                    while (isdigit(line[++cursor]))
-                        ;
-                    y_size = std::stoi(line.substr(read_start_index, read_start_index - cursor));
-                }
+            }
+            catch (...)
+            {
+                return false;
+            }
+
+            if (x_size <= 0 || y_size <= 0)
+            {
+                LOG(DEBUG) << "Read invalid board sizes (" << x_size << "," << y_size << ") from file '" << sourceFileName << "'.";
+                return false;
             }
 
             this->width = x_size;
@@ -193,8 +216,10 @@ bool LocalBoard::importAll(std::string sourceFileName)
             field.resize(width * height, life_status_t::dead);
 
             ++line_number;
+            continue;
         }
 
+        // all other lines, parse board content
         if (line_number >= 0)
         {
             for (int cursor = 0; cursor < line_length; ++cursor)
@@ -260,7 +285,7 @@ bool LocalBoard::importAll(std::string sourceFileName)
         }
     }
 
-    BoardFile.close();
+    boardFile.close();
     return true;
 }
 
