@@ -1,6 +1,9 @@
 #ifndef BoardDrawer_h
 #define BoardDrawer_h
 
+#include <cmath>
+
+#include "misc/Log.h"
 #include "gui/DrawingWindow.h"
 #include "board/Board.h"
 

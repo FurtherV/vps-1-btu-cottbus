@@ -1,4 +1,3 @@
-#include <cmath>
 #include "gui/BoardDrawer.h"
 
 BoardDrawer::BoardDrawer(GUI::DrawingWindow *drawingWindow, Board *board, bool forceSquareCells) : drawingWindow(drawingWindow),
@@ -19,14 +18,15 @@ void BoardDrawer::calculateSizes()
     size_t windowWidth = drawingWindow->getWidth();
     size_t windowHeight = drawingWindow->getHeight();
 
+    // TODO: remove these and add a zoom + scroll implementation
     if (boardWidth > windowWidth)
     {
-        std::printf("[WARNING] Board width is greater than window width, graphical output might be inaccurate!\n");
+        LOG(WARN) << "Board width is greater than window width, graphical output might be inaccurate!";
     }
 
     if (boardHeight > windowHeight)
     {
-        std::printf("[WARNING] Board height is greater than window height, graphical output might be inaccurate!\n");
+        LOG(WARN) << "Board height is greater than window height, graphical output might be inaccurate!";
     }
 
     // calculate how many pixels in width and height each grid cell will be rendered as by dividing the window size by the board size and rounding.
@@ -41,14 +41,14 @@ void BoardDrawer::calculateSizes()
         cellHeightPixel = min;
     }
 
-    std::printf("[INFO] Each cell will be drawn with %lupx wide and %lupx heigh.\n", cellWidthPixel, cellHeightPixel);
+    LOG(DEBUG) << "Each cell will be drawn " << cellWidthPixel << "px wide and " << cellHeightPixel << "px high";
     if (forceSquareCells)
     {
-        std::printf("[INFO] Square cells are forced.\n");
+        LOG(DEBUG) << "Square cells are forced.";
     }
     else
     {
-        std::printf("[INFO] Square cells are not forced.\n");
+        LOG(DEBUG) << "Square cells are not forced.";
     }
 }
 
