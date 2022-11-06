@@ -8,10 +8,10 @@
 #ifndef debug_h
 #define debug_h
 
-#ifdef DEBUG
-	#define _DEBUG(expr) expr
+#ifdef DEBUG_MODE
+#define _DEBUG(expr) expr
 #else
-	#define _DEBUG(expr) ;
+#define _DEBUG(expr) ;
 #endif
 
 #endif

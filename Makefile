@@ -1,6 +1,7 @@
 #author Matthias Noack <Ma.Noack@tu-cottbus.de>
 
 SRC_FILES = \
+	misc/Log.cc \
 	gui/DrawingWindow.cc \
 	gui/BoardDrawer.cc \
 	board/LocalBoard.cc \
@@ -22,6 +23,7 @@ CXX	= g++
 LD	= g++
 
 CXXFLAGS = -g -Wall
+#CXXFLAGS += -DDEBUG_MODE
 
 INCLUDES = -I$(INC_DIR)
 
@@ -41,7 +43,7 @@ OBJS_MAIN = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.o, $(SRC_MAIN)))
 DEPS = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_FILES)))
 DEPS += $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_MAIN))) 
 TMP_SUBDIRS = $(sort $(dir $(OBJS)))
-.PHONY: clean all depend
+.PHONY: clean all depend debug
 
 all: depend directories $(TARGET_MAIN)
 
@@ -57,6 +59,9 @@ $(TMP_DIR)%.o : $(SRC_DIR)%$(CXX_FILE_ENDING) $(TMP_SUBDIRS)
 depend: $(SRCS) $(TMP_SUBDIRS)
 	$(CXX) -MD -E $(CXXFLAGS) $(SRCS) $(INCLUDES) > /dev/null
 	mv *.d $(DEP_DIR)
+
+debug: CXXFLAGS += -DDEBUG_MODE -g
+debug: all
 
 main: directories $(TARGET_MAIN)
 
