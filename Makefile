@@ -3,7 +3,7 @@
 SRC_FILES = \
 	misc/Log.cc \
 	gui/DrawingWindow.cc \
-	gui/BoardDrawer.cc \
+	gui/BoardDrawingWindow.cc \
 	board/LocalBoard.cc \
 
 	

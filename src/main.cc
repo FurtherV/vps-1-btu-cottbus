@@ -2,11 +2,11 @@
 #include <time.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <unistd.h>
 
 #include "misc/Log.h"
-#include "gui/DrawingWindow.h"
 #include "board/LocalBoard.h"
-#include "gui/BoardDrawer.h"
+#include "gui/BoardDrawingWindow.h"
 
 using namespace std;
 using namespace GUI;
@@ -125,9 +125,7 @@ int main(int argc, char *argv[])
 
 	if (graphical)
 	{
-		DrawingWindow window(windowWidth, windowHeight, "Game of Life");
-		BoardDrawer drawer(&window, &board);
-		drawer.draw();
+		BoardDrawingWindow window(&board, windowWidth, windowHeight);
 
 		cout << "Simulation Step: 0" << endl;
 		cout << "Press enter to continue..." << endl;
@@ -135,7 +133,6 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < steps; i++)
 		{
 			board.step();
-			drawer.draw();
 			cout << "Simulation Step: " << i + 1 << endl;
 			cout << "Press enter to continue..." << endl;
 			cin.get();

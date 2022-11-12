@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <sys/types.h>
+#include <atomic>
 
 enum life_status_t
 {
@@ -27,7 +28,10 @@ public:
 	 * @param height is the vertical size of the board
 	 */
 	Board(int width, int height)
-		: width(width), height(height) {}
+		: width(width), height(height)
+	{
+		currentStep = 0;
+	}
 
 	/**
 	 * Because this is a pure virtual class, we should declare
@@ -86,9 +90,19 @@ public:
 	 */
 	virtual int getHeight() = 0;
 
+	/**
+	 * @brief Get the current board iteration number.
+	 * @return iteration number (current step)
+	 */
+	size_t getCurrentStep()
+	{
+		return currentStep;
+	}
+
 protected:
 	int width;
 	int height;
+	atomic_size_t currentStep;
 };
 
 #endif

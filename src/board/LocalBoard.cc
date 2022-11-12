@@ -92,6 +92,7 @@ void LocalBoard::step()
             setPosRaw(x, y, newField[y * width + x]);
         }
     }
+    currentStep += 1;
 }
 
 void LocalBoard::setPosRaw(int x, int y, enum life_status_t status)

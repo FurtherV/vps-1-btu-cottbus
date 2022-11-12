@@ -85,7 +85,7 @@ namespace GUI
 
 		bool isDestroyed() const; // returns true if the user closed the window
 
-	private:
+	protected:
 		void destroyWindow();
 		void onExpose(unsigned int xPos, unsigned int yPos, unsigned int width, unsigned int height) const;
 
