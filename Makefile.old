@@ -1,4 +1,4 @@
-#author Matthias Noack<Ma.Noack@tu-cottbus.de>
+#author Matthias Noack <Ma.Noack@tu-cottbus.de>
 
 SRC_FILES = \
 	misc/Log.cc \
@@ -7,7 +7,8 @@ SRC_FILES = \
 	board/LocalBoard.cc \
 	net/UDPNetwork.cc \
 
-
+	
+SRC_MAIN = main.cc
 SRC_SERVER = server.cc
 SRC_CLIENT = client.cc
 
@@ -25,6 +26,7 @@ CXX	= g++
 LD	= g++
 
 CXXFLAGS = -g -Wall
+#CXXFLAGS += -DDEBUG_MODE
 
 INCLUDES = -I$(INC_DIR)
 
@@ -33,21 +35,25 @@ XLIBS   = -L$(XLIBDIR) -lX11
 PTHREADLIBS = -lpthread
 LIBS = $(XLIBS) $(PTHREADLIBS)
 
+TARGET_MAIN = $(BIN_DIR)main
 TARGET_SERVER = $(BIN_DIR)server
 TARGET_CLIENT = $(BIN_DIR)client
+
+MKDIR_P = mkdir -p
 
 ######## end of configureable part ########
 SRCS = $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJS = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.o, $(SRC_FILES)))
-OBJS_SERVER = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.o, $(SRC_SERVER)))
-OBJS_CLIENT = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.o, $(SRC_CLIENT)))
+OBJS_MAIN = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.o, $(SRC_MAIN)))
 DEPS = $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_FILES)))
-DEPS += $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_SERVER))) 
-DEPS += $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_CLIENT))) 
+DEPS += $(addprefix $(TMP_DIR), $(subst $(CXX_FILE_ENDING),.d, $(SRC_MAIN))) 
 TMP_SUBDIRS = $(sort $(dir $(OBJS)))
-.PHONY: clean all depend
+.PHONY: clean all depend debug
 
-all: depend $(TARGET_SERVER) $(TARGET_CLIENT)
+all: depend directories $(TARGET_MAIN) $(TARGET_SERVER) $(TARGET_CLIENT)
+
+$(TARGET_MAIN):	$(OBJS) $(OBJS_MAIN)
+	$(LD) $(LDFLAGS) $(OBJS) $(OBJS_MAIN) $(LIBS) -o $(TARGET_MAIN)
 
 $(TARGET_SERVER): $(OBJS) $(OBJS_SERVER)
 	$(LD) $(LDFLAGS) $(OBJS) $(OBJS_SERVER) $(LIBS) -o $(TARGET_SERVER)
@@ -56,7 +62,7 @@ $(TARGET_CLIENT): $(OBJS) $(OBJS_CLIENT)
 	$(LD) $(LDFLAGS) $(OBJS) $(OBJS_CLIENT) $(LIBS) -o $(TARGET_CLIENT)
 
 $(TMP_SUBDIRS) :
-	mkdir -p $@
+	$(MKDIR_P) $@
 
 $(TMP_DIR)%.o : $(SRC_DIR)%$(CXX_FILE_ENDING) $(TMP_SUBDIRS)
 	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
@@ -65,12 +71,16 @@ depend: $(SRCS) $(TMP_SUBDIRS)
 	$(CXX) -MD -E $(CXXFLAGS) $(SRCS) $(INCLUDES) > /dev/null
 	mv *.d $(DEP_DIR)
 
-server: $(TARGET_SERVER)
+debug: CXXFLAGS += -DDEBUG_MODE -g
+debug: all
 
-client: $(TARGET_CLIENT)
+main: directories $(TARGET_MAIN)
 
 clean:
-	rm -rf $(OBJS) $(OBJS_SERVER) $(OBJS_CLIENT) $(TARGET_SERVER) $(TARGET_CLIENT) $(DEPS) $(TMP_SUBDIRS)
+	rm -rf $(OBJS) $(OBJS_MAIN) $(TARGET_MAIN) $(DEPS) $(TMP_SUBDIRS)
+
+directories:
+	$(MKDIR_P) $(BIN_DIR)
 
 # generated dependencies
 -include $(DEPS)
