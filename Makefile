@@ -25,6 +25,9 @@ CXX	= g++
 LD	= g++
 
 CXXFLAGS = -g -Wall
+ifeq ($(DEBUG),1)
+CXXFLAGS += -DDEBUG_MODE
+endif
 
 INCLUDES = -I$(INC_DIR)
 
