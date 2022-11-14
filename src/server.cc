@@ -8,17 +8,29 @@
 
 int main()
 {
-	UDPNetwork* net = new UDPNetwork(7654);
-	LocalBoard* board_a = new LocalBoard(100,100);
-	LocalBoard* board_b = new LocalBoard(100,100);
-	BoardServer* boardserver = new BoardServer((IPNetwork *)net,4,(Board *)board_a,(Board *)board_b);
+	// Configure logger before usage.
+	LOGCFG = {};
+	LOGCFG.headers = true;
+#ifdef DEBUG_MODE
+	LOGCFG.level = DEBUG;
+#else
+	LOGCFG.level = ERROR;
+#endif
+	// End of configuration.
 
-	//Following code is only a usage example, please use class BoardServer
-	//for such kind of implementation
+	UDPNetwork *net = new UDPNetwork(7654);
+	LocalBoard *board_a = new LocalBoard(100, 100);
+	LocalBoard *board_b = new LocalBoard(100, 100);
+	BoardServer *boardserver = new BoardServer((IPNetwork *)net, 4, (Board *)board_a, (Board *)board_b);
+
+	// Following code is only a usage example, please use class BoardServer
+	// for such kind of implementation
 	IPAddress client;
 	char message[20];
-	net->receive(client,message,20);
-	char rep[]="hello";
-	net->reply(client,rep,10);
+	LOG(DEBUG) << "Waiting for message from client...";
+	net->receive(client, message, 20);
+	char rep[] = "hello client";
+	LOG(DEBUG) << "Sending '" << rep << "' to client";
+	net->reply(client, rep, 10);
+	cin.get();
 }
-
