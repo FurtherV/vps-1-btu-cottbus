@@ -12,8 +12,8 @@ UDPNetwork::UDPNetwork(short port)
 	socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (socket_fd == -1)
 	{
-		LOG(DEBUG) << "Socket could not be created (" << socket_fd << ")";
-		LOG(DEBUG) << "Error: " << errno << " - " << strerror(errno);
+		LOG(ERROR) << "Socket could not be created (" << socket_fd << ")";
+		LOG(ERROR) << "Error: " << errno << " - " << strerror(errno);
 		return;
 	}
 
