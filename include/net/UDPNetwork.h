@@ -25,6 +25,11 @@ public:
 	UDPNetwork();
 
 	/**
+	 * Destructor which closes the socket, if it is open.
+	 */
+	~UDPNetwork();
+
+	/**
 	 * Every time a client wants to communicate to the server it has to do a request. It sends its message
 	 * with the command that shall be executed and waits for the answer of the server.
 	 *

@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "net/UDPNetwork.h"
@@ -36,6 +37,14 @@ UDPNetwork::UDPNetwork()
 		LOG(ERROR) << "Socket could not be created (" << socket_fd << ")";
 		LOG(ERROR) << "Error: " << errno << " - " << strerror(errno);
 		return;
+	}
+}
+
+UDPNetwork::~UDPNetwork()
+{
+	if (socket_fd != -1)
+	{
+		close(socket_fd);
 	}
 }
 
