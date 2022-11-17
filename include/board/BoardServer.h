@@ -57,8 +57,9 @@ class BoardServer {
 
             // parse message
             message_type_t message_type = message->getType();
-            LOG(DEBUG) << "Message (" << (ssize_t)message->getType() << ") received from " << client_address.getAddr()
-                       << ":" << client_address.getPort() << " with sequence number " << sequence_number;
+            // LOG(DEBUG) << "Message (" << (ssize_t)message->getType() << ") received from " <<
+            // client_address.getAddr()
+            //            << ":" << client_address.getPort() << " with sequence number " << sequence_number;
 
             switch (message_type) {
             case message_type_t::logon: {
@@ -119,11 +120,13 @@ class BoardServer {
      * has to work on.
      */
     void logon(IPAddress *ip, int sequence_number) {
+        // add client to lists, if joined late or rejoined they can still work with current timestep
         addresses.push_back(ip);
         client_timesteps.push_back(timestep);
         client_barrier_sequence_number.push_back(0);
 
         int client_id = (int)addresses.size() - 1;
+        LOG(INFO) << "[LOGIN] Client:" << client_id << " from " << ip->getAddr() << ":" << ip->getPort();
 
         int start_x, start_y, end_x, end_y;
         if (client_count == 1) {
@@ -142,8 +145,8 @@ class BoardServer {
             end_y = start_y + rows_for_this_client;
         }
 
-        LOG(DEBUG) << "Client " << client_id << " has area from " << start_x << "," << start_y << " to " << end_x << ","
-                   << end_y;
+        LOG(INFO) << "[LOGIN] Client:" << client_id << " has area (" << start_x << "," << start_y << ") to (" << end_x
+                  << "," << end_y << ")";
 
         LogonMessage *message =
             LogonMessage::createReply(sequence_number, client_id, start_x, start_y, end_x, end_y, timesteps);
@@ -163,30 +166,37 @@ class BoardServer {
         size_t index = getClientIdFromIP(ip);
 
         if (index == (size_t)-1) {
-            LOG(DEBUG) << "Unkown client '" << ip->getAddr() << ":" << ip->getPort()
-                       << "' tried to use barrier function";
+            LOG(WARN) << "Unkown client '" << ip->getAddr() << ":" << ip->getPort()
+                      << "' tried to use barrier function";
             return;
         }
+
+        LOG(INFO) << "[SIMULATION] [CYCLE-" << timestep << "] Client:" << index << " Done";
 
         client_timesteps[index] = timestep + 1;
         bool all_clients_done = true;
         if (client_timesteps.size() < client_count) {
             all_clients_done = false;
         } else {
-            for (auto client_state : client_timesteps) {
-                if (client_state < this->timestep) {
+            for (auto client_timestep : client_timesteps) {
+                if (client_timestep <= this->timestep) {
                     all_clients_done = false;
                     break;
                 }
             }
         }
         if (all_clients_done) {
-            // swap boards
-            std::swap(board_read, board_write);
-
+            LOG(INFO) << "[SIMULATION] [CYCLE-" << timestep << "] Completed";
+            // copy everything from board_write to board_read and clear board_write
+            board_read->clear();
+            for (int x = 0; x < board_read->getWidth(); x++) {
+                for (int y = 0; y < board_read->getHeight(); y++) {
+                    board_read->setPos(x, y, board_write->getPos(x, y));
+                }
+            }
             board_write->clear();
-            this->timestep += 1;
 
+            this->timestep += 1;
             // must be done to trigger possible UI refresh
             board_read->setCurrentStep((size_t)timestep);
             board_write->setCurrentStep((size_t)timestep);

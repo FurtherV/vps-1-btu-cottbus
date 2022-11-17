@@ -35,7 +35,7 @@ class LifeClient {
      * @return a -1 if logon failed, else 0
      */
     int start() {
-        LOG(DEBUG) << "LifeClient::start()";
+        LOG(INFO) << "[INIT] Started";
         char buffer[100];
         LogonMessage *request = LogonMessage::createRequest(getNextSequenceNumber());
         ssize_t received_bytes = net->request(server, request, sizeof(LogonMessage), buffer, sizeof(buffer));
@@ -47,6 +47,9 @@ class LifeClient {
         y1 = result->start_y;
         x2 = result->end_x;
         y2 = result->end_y;
+        LOG(INFO) << "[LOGIN] Logged in as Client:" << client_id;
+        LOG(INFO) << "[LOGIN] Assigned area (" << x1 << "," << y1 << ") to (" << x2 << "," << y2 << ") for "
+                  << timesteps << " steps";
         return received_bytes > 0 ? 0 : -1;
     };
 
@@ -60,9 +63,9 @@ class LifeClient {
             BarrierMessage *request = BarrierMessage::createRequest(getNextSequenceNumber(), client_id, timestep);
             net->request(server, request, sizeof(BarrierMessage), buffer, sizeof(buffer));
             BarrierMessage *result = (BarrierMessage *)buffer;
-            if (result->client_id == client_id && result->continueNext) {
-                timestep++;
-            }
+            // if (result->client_id == client_id && result->continueNext) {
+            timestep++;
+            //}
         }
     };
 

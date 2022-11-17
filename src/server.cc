@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     if (!vm["output"].defaulted()) {
         LOG(DEBUG) << "Exporting board to " << vm["output"].as<string>();
-        board_write->exportAll(vm["output"].as<string>());
+        board_read->exportAll(vm["output"].as<string>());
     }
     return 0;
 }
