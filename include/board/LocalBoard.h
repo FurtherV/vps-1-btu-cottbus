@@ -1,17 +1,16 @@
 #ifndef LOCALBOARD_H
 #define LOCALBOARD_H
 
+#include <algorithm>
+#include <string>
 #include <sys/types.h>
 #include <vector>
-#include <string>
-#include <algorithm>
 
-#include "misc/Log.h"
 #include "board/Board.h"
+#include "misc/Log.h"
 
-class LocalBoard : public Board
-{
-public:
+class LocalBoard : public Board {
+  public:
     /**
      * Create a board with a given size, where the upper left corner is 0,0
      *
@@ -24,7 +23,7 @@ public:
      * Because this is a pure virtual class, we should declare
      * the destructor also as virtual.
      */
-    ~LocalBoard();
+    virtual ~LocalBoard();
 
     /**
      * Sets a element to a life status. If position or status is invalid,
@@ -50,19 +49,19 @@ public:
      *
      * @return true, if successful, else otherwise.
      */
-    bool exportAll(std::string destFileName);
+    bool exportAll(std::string destFileName) override;
 
     /**
      * Imports to this board from output file.
      *
      * @return true, if successful, else otherwise.
      */
-    bool importAll(std::string sourceFileName);
+    bool importAll(std::string sourceFileName) override;
 
     /**
      * Performs one step on this board.
      */
-    void step();
+    void step() override;
 
     /**
      * @brief Get the board width.
@@ -76,7 +75,12 @@ public:
      */
     int getHeight() override;
 
-protected:
+    /**
+     * @brief Clears the board by killing all alive cells.
+     */
+    void clear() override;
+
+  protected:
     /**
      * Sets an element to a life status. Invalid inputs will be discarded.
      *

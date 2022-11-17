@@ -11,6 +11,7 @@ This project is build using gnu make.
 ### Dependencies
 
 - X11 (most Linux distributions can install it with the package libx11-dev)
+- Boost Program Options
 
 ### Targets
 
