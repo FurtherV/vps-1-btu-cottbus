@@ -26,7 +26,7 @@ ASM	= g++
 CXX	= g++
 LD	= g++
 
-CXXFLAGS = -g -Wall
+CXXFLAGS = -g -Wall -std=c++11
 ifeq ($(DEBUG),1)
 CXXFLAGS += -DDEBUG_MODE
 endif
