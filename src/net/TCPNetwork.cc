@@ -79,7 +79,6 @@ ssize_t TCPNetwork::request(const Server &server, void *req, size_t reqlen, void
     FD_ZERO(&rset);
     FD_SET(socket_fd, &rset);
 
-    // TODO: No input is coming after second simulation cycle for 2+ client situations, nothing is received!
     if (select(socket_fd + 1, &rset, NULL, NULL, NULL) < 0) {
         throw std::system_error(errno, std::generic_category(), "Could not monitor socket descriptors");
     }

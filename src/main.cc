@@ -1,33 +1,16 @@
+#include "board/LocalBoard.h"
+#include "gui/BoardDrawingWindow.h"
+#include "misc/Log.h"
+#include <boost/program_options.hpp>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "board/LocalBoard.h"
-#include "gui/BoardDrawingWindow.h"
-#include "misc/Log.h"
-
 using namespace std;
 using namespace GUI;
 
-/**
- * @brief The Game of Life (GoL for short), with an optional graphical representation.
- *
- * @details This program supports the following command line options:
- * -i <FILE> 	=> Loads the given file as a board configuration.
- * -o <FILE> 	=> Saves the board configuration (after the simulation) as given file.
- * -r <NUMBER> 	=> Amount of simulation steps to be done.
- * -g 			=> If set, a GUI will be used.
- * -a			=> If set, Board will be drawn to match aspect ratio of window to board.
- * 				(IE: cells might not be squares).
- * -w <NUMBER>	=> Sets the windows width, only works when -g is set, default: 800
- * -h <NUMBER>	=> Sets the windows height, only works when -g is set, default: 800
- *
- * @param argc
- * @param argv
- * @return
- */
 int main(int argc, char *argv[]) {
     // Configure logger before usage.
     LOGCFG = {};
@@ -39,105 +22,98 @@ int main(int argc, char *argv[]) {
 #endif
     // End of configuration.
 
-    LOG(DEBUG) << "Debug mode is enabled.";
-    int option_val = 0;
+    // parse command line args
+    namespace po = boost::program_options;
+
+    // define available arguments
+    po::options_description desc("Usage", 1024, 512);
+    desc.add_options()                                                                                         //
+        ("help,", "Print help message")                                                                        //
+        ("input,i", po::value<string>()->default_value(""), "Input file\nMust be in the correct .rle format")  //
+        ("output,o", po::value<string>()->default_value(""), "Output file\nExisting files will be overwriten") //
+        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                    //
+        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")        //
+        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")      //
+        ("profile,", po::value<string>()->default_value(""),
+         "Output file for profiler") //
+        ("gui,g", "Enable GUI");     //
+
+    // read arguments
+    po::variables_map vm;
+
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+    } catch (po::error &e) {
+        LOG(ERROR) << e.what();
+        cerr << desc << endl;
+        return 1;
+    }
+
+    // Print help text and exit on --help
+    if (vm.count("help")) {
+        cerr << "Game of Life Server" << endl;
+        cerr << desc << endl;
+        return 0;
+    }
+
+    // Store parameters and validate them
+    int board_width = vm["width"].as<int>();
+    if (board_width <= 0) {
+        LOG(ERROR) << "'width' argument must be greater than 0";
+        return 1;
+    }
+
+    int board_height = vm["height"].as<int>();
+    if (board_height <= 0) {
+        LOG(ERROR) << "'height' argument must be greater than 0";
+        return 1;
+    }
+
+    int simulation_steps = vm["steps"].as<int>();
+    if (simulation_steps < 0) {
+        LOG(ERROR) << "'steps' argument must be greater than 0";
+        return 1;
+    }
 
     string input_path = "RANDOM";
-    string output_path = "";
-    int steps = 0;
-    unsigned int windowWidth = 800;
-    unsigned int windowHeight = 800;
-
-    bool graphical = false;
-
-    while ((option_val = getopt(argc, argv, ":i:o:r:w:h:g")) != -1) {
-        switch (option_val) {
-        case 'i':
-            if (optarg != NULL)
-                input_path = optarg;
-            break;
-        case 'o':
-            if (optarg != NULL)
-                output_path = optarg;
-            break;
-        case 'r':
-            if (optarg != NULL)
-                steps = atoi(optarg);
-            if (steps < 0) {
-                LOG(ERROR) << "GoL does not support negative step amounts.";
-                return 1;
-            }
-            break;
-        case 'g':
-            graphical = true;
-            break;
-        case 'w':
-            if (optarg != NULL) {
-                int newWindowWidth = atoi(optarg);
-                if (newWindowWidth <= 0) {
-                    LOG(ERROR) << "GoL GUI does not support zero or negative window sizes.";
-                    return 1;
-                }
-                windowWidth = (unsigned int)newWindowWidth;
-            }
-            break;
-        case 'h':
-            if (optarg != NULL) {
-                int newWindowHeight = atoi(optarg);
-                if (newWindowHeight <= 0) {
-                    LOG(ERROR) << "GoL GUI does not support zero or negative window sizes.";
-                    return 1;
-                }
-                windowHeight = (unsigned int)newWindowHeight;
-            }
-            break;
-        default:
-            break;
-        }
+    if (!vm["input"].defaulted()) {
+        input_path = vm["input"].as<string>();
+        LOG(DEBUG) << "Importing board from " << input_path;
     }
 
-    if (input_path == "RANDOM" || input_path == "") {
-        LOG(INFO) << "No board configuration specified, GoL will use a random configuration.";
-    }
-
-    if (output_path == "") {
-        LOG(INFO) << "No output file specified, GoL will not write anything to disk.";
-    }
-
-    LocalBoard board(100, 100);
-    bool importResult = board.importAll(input_path);
+    LocalBoard *board = new LocalBoard(board_width, board_height);
+    bool importResult = board->importAll(input_path);
     if (!importResult) {
         LOG(ERROR) << "Could not import board from file '" << input_path << "'.";
         LOG(ERROR) << "File might be missing, its content might be malformed or permissions to access it are missing.";
         return 1;
     }
 
-    if (graphical) {
-        BoardDrawingWindow window(&board, windowWidth, windowHeight);
+    if (vm.count("gui")) {
+        BoardDrawingWindow window(board, 800, 800);
 
         cout << "Simulation Step: 0" << endl;
         cout << "Press enter to continue..." << endl;
         cin.get();
-        for (int i = 0; i < steps; i++) {
-            board.step();
+        for (int i = 0; i < simulation_steps; i++) {
+            board->step();
             cout << "Simulation Step: " << i + 1 << endl;
             cout << "Press enter to continue..." << endl;
             cin.get();
         }
     } else {
-        for (int i = 0; i < steps; i++) {
-            board.step();
+        for (int i = 0; i < simulation_steps; i++) {
+            board->step();
         }
     }
 
-    if (output_path != "") {
-        bool exportResult = board.exportAll(output_path);
-        if (!exportResult) {
-            LOG(ERROR) << "Could not export the board to file '" << output_path
-                       << "', please check your file system permissions.";
-            return 1;
-        }
+    if (!vm["output"].defaulted()) {
+        LOG(DEBUG) << "Exporting board to " << vm["output"].as<string>();
+        board->exportAll(vm["output"].as<string>());
     }
+
     cout << "Done." << endl;
+    delete board;
     return 0;
 }

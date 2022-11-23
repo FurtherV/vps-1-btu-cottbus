@@ -1,5 +1,3 @@
-#include <boost/program_options.hpp>
-
 #include "board/Board.h"
 #include "board/BoardServer.h"
 #include "board/LocalBoard.h"
@@ -8,6 +6,7 @@
 #include "net/IPNetwork.h"
 #include "net/TCPNetwork.h"
 #include "net/UDPNetwork.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace GUI;
@@ -28,16 +27,17 @@ int main(int argc, char **argv) {
 
     // define available arguments
     po::options_description desc("Usage", 1024, 512);
-    desc.add_options()                                                                                    //
-        ("help,", "Print help message")                                                                   //
-        ("input,i", po::value<string>()->default_value(""), "Input file")                                 //
-        ("output,o", po::value<string>()->default_value(""), "Output file")                               //
-        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                               //
-        ("width,w", po::value<int>()->default_value(100), "Width of the board. Not compatible with -i")   //
-        ("height,h", po::value<int>()->default_value(100), "Height of the board. Not compatible with -i") //
-        ("clients,c", po::value<int>()->default_value(1), "Required connected clients")                   //
-        ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n0) UDP\n1) TCP")      //
-        ("gui,g", "Enable GUI");                                                                          //
+    desc.add_options()                                                                                         //
+        ("help,", "Print help message")                                                                        //
+        ("input,i", po::value<string>()->default_value(""), "Input file\nMust be in the correct .rle format")  //
+        ("output,o", po::value<string>()->default_value(""), "Output file\nExisting files will be overwriten") //
+        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                    //
+        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")        //
+        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")      //
+        ("clients,c", po::value<int>()->default_value(1), "Required connected clients")                        //
+        ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n  0) UDP\n  1) TCP")       //
+        ("profile,", po::value<string>()->default_value(""), "Output file for profiler")                       //
+        ("gui,g", "Enable GUI");                                                                               //
 
     // read arguments
     po::variables_map vm;
@@ -51,38 +51,36 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // did someone say 'help'?
+    // Print help text and exit on --help
     if (vm.count("help")) {
         cerr << "Game of Life Server" << endl;
         cerr << desc << endl;
         return 0;
     }
 
+    // Store parameters and validate them
     int board_width = vm["width"].as<int>();
     if (board_width <= 0) {
-        LOG(ERROR) << "width parameter must be greater than 0";
+        LOG(ERROR) << "'width' argument must be greater than 0";
         return 1;
     }
 
     int board_height = vm["height"].as<int>();
     if (board_height <= 0) {
-        LOG(ERROR) << "'height' parameter must be greater than 0";
+        LOG(ERROR) << "'height' argument must be greater than 0";
         return 1;
     }
 
     int simulation_steps = vm["steps"].as<int>();
     if (simulation_steps < 0) {
-        LOG(ERROR) << "'steps' parameter must be equal to or greater than 0";
+        LOG(ERROR) << "'steps' argument must be greater than 0";
         return 1;
     }
 
     int client_count = vm["clients"].as<int>();
     if (client_count < 0) {
-        LOG(ERROR) << "'clients' parameter must be equal to or greater than 0";
+        LOG(ERROR) << "'clients' argument must be greater than 0";
         return 1;
-    }
-    if (client_count == 0) {
-        LOG(WARN) << "'clients' parameter was zero, simulation will be skipped";
     }
 
     IPNetwork *net;
@@ -99,34 +97,50 @@ int main(int argc, char **argv) {
         break;
     }
     default: {
-        LOG(ERROR) << network_type << " is not a valid network type";
+        LOG(ERROR) << "'network' must be a valid network type";
         return 1;
     }
     }
 
-    Board *board_read = new LocalBoard(board_width, board_height);
-    Board *board_write = new LocalBoard(board_width, board_height);
+    string input_path = "RANDOM";
     if (!vm["input"].defaulted()) {
-        LOG(DEBUG) << "Importing board from " << vm["input"].as<string>();
-        board_read->importAll(vm["input"].as<string>());
-        board_write->importAll(vm["input"].as<string>());
-        board_write->clear();
+        input_path = vm["input"].as<string>();
+        LOG(DEBUG) << "Importing board from " << input_path;
     }
 
+    Board *board_read = new LocalBoard(board_width, board_height);
+    Board *board_write = new LocalBoard(board_width, board_height);
+
+    bool import_result = board_read->importAll(input_path);
+    if (!import_result) {
+        LOG(ERROR) << "Could not import board from file '" << input_path << "'.";
+        LOG(ERROR) << "File might be missing, its content might be malformed or permissions to access it are missing.";
+        return 1;
+    }
+
+    board_write->importAll(vm["input"].as<string>());
+    board_write->clear();
+
+    BoardDrawingWindow *window_read = nullptr;
+    BoardDrawingWindow *window_write = nullptr;
+
     if (vm.count("gui")) {
-        BoardDrawingWindow *window_read = new BoardDrawingWindow(board_read, 800, 800);
-        BoardDrawingWindow *window_write = new BoardDrawingWindow(board_write, 800, 800);
+        window_read = new BoardDrawingWindow(board_read, 800, 800);
+        window_write = new BoardDrawingWindow(board_write, 800, 800);
     }
-    if (simulation_steps > 0 && client_count > 0) {
-        BoardServer *board_server = new BoardServer(net, client_count, board_read, board_write, simulation_steps);
-        board_server->start();
-    }
+
+    BoardServer *board_server = new BoardServer(net, client_count, board_read, board_write, simulation_steps);
+    board_server->start();
+    delete board_server;
 
     if (!vm["output"].defaulted()) {
         LOG(DEBUG) << "Exporting board to " << vm["output"].as<string>();
         board_read->exportAll(vm["output"].as<string>());
     }
 
+    delete window_read;
+    delete window_write;
+    delete board_server;
     delete net;
     return 0;
 }
