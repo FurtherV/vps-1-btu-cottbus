@@ -7,6 +7,7 @@
 #include "net/IPAddress.h"
 #include "net/IPNetwork.h"
 #include "net/TCPNetwork.h"
+#include "net/UDPNetwork.h"
 
 using namespace std;
 using namespace GUI;
@@ -35,6 +36,7 @@ int main(int argc, char **argv) {
         ("width,w", po::value<int>()->default_value(100), "Width of the board. Not compatible with -i")   //
         ("height,h", po::value<int>()->default_value(100), "Height of the board. Not compatible with -i") //
         ("clients,c", po::value<int>()->default_value(1), "Required connected clients")                   //
+        ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n0) UDP\n1) TCP")      //
         ("gui,g", "Enable GUI");                                                                          //
 
     // read arguments
@@ -83,7 +85,25 @@ int main(int argc, char **argv) {
         LOG(WARN) << "'clients' parameter was zero, simulation will be skipped";
     }
 
-    IPNetwork *net = (IPNetwork *)new TCPNetwork(7654, client_count);
+    IPNetwork *net;
+    int network_type = vm["network"].as<int>();
+    switch (network_type) {
+    case 0: {
+        net = (IPNetwork *)new UDPNetwork(7654);
+        LOG(DEBUG) << "Using UDP";
+        break;
+    }
+    case 1: {
+        net = (IPNetwork *)new TCPNetwork(7654, client_count);
+        LOG(DEBUG) << "Using TCP";
+        break;
+    }
+    default: {
+        LOG(ERROR) << network_type << " is not a valid network type";
+        return 1;
+    }
+    }
+
     Board *board_read = new LocalBoard(board_width, board_height);
     Board *board_write = new LocalBoard(board_width, board_height);
     if (!vm["input"].defaulted()) {
