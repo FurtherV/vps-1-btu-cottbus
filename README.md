@@ -2,7 +2,8 @@
 
 ## Description
 
-This program simulates the GoL for a configurable amount of cycles, can load and stores boards and has an optional x11 graphical output.
+This program simulates the GoL for a configurable amount of cycles, can load and stores boards and has an optional x11
+graphical output.
 
 ## How to build
 
@@ -10,16 +11,18 @@ This project is build using gnu make.
 
 ### Dependencies
 
-- X11 (most Linux distributions can install it with the package libx11-dev)
-- Boost Program Options
+- A g++ and gcc version that supports at least c++14
+- X11 (Ubuntu Package: `libx11-dev`)
+- Boost Program Options (Ubuntu Package: `libboost-program-options-dev`)
 
 ### Targets
 
 - clean: removes most output files
 - server: builds the server application
 - client: builds the client application
+- main: builds the local application
 
-### Variables
+### Make Variables
 
 Usage: make target1 target2 target3 ... VARIABLE1=VALUE1 VARIABLE=VALUE2 ...
 
