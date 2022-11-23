@@ -9,17 +9,11 @@
 #define LOG_H
 
 #include <iostream>
+#include <string.h>
 
-enum typelog
-{
-    INFO,
-    WARN,
-    ERROR,
-    DEBUG
-};
+enum typelog { INFO, WARN, ERROR, DEBUG };
 
-struct structlog
-{
+struct structlog {
     bool headers = true;
     typelog level = ERROR;
 };
@@ -28,45 +22,35 @@ extern structlog LOGCFG;
 
 using namespace std;
 
-class LOG
-{
-public:
+class LOG {
+  public:
     LOG() {}
-    LOG(typelog type)
-    {
+    LOG(typelog type) {
         msglevel = type;
-        if (LOGCFG.headers)
-        {
+        if (LOGCFG.headers) {
             operator<<("[" + getLabel(type) + "] ");
         }
     }
-    ~LOG()
-    {
-        if (opened)
-        {
+    ~LOG() {
+        if (opened) {
             cout << endl;
         }
         opened = false;
     }
-    template <class T>
-    LOG &operator<<(const T &msg)
-    {
-        if (msglevel <= LOGCFG.level)
-        {
+    template <class T> LOG &operator<<(const T &msg) {
+        if (msglevel <= LOGCFG.level) {
             cout << msg;
             opened = true;
         }
         return *this;
     }
 
-private:
+  private:
     bool opened = false;
     typelog msglevel = DEBUG;
-    inline string getLabel(typelog type)
-    {
+    inline string getLabel(typelog type) {
         string label;
-        switch (type)
-        {
+        switch (type) {
         case DEBUG:
             label = "DEBUG";
             break;

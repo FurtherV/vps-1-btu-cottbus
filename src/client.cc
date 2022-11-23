@@ -2,7 +2,7 @@
 #include "client/LifeClient.h"
 #include "net/IPAddress.h"
 #include "net/IPNetwork.h"
-#include "net/UDPNetwork.h"
+#include "net/TCPNetwork.h"
 
 #include "misc/Log.h"
 
@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 #endif
     // End of configuration.
 
-    UDPNetwork *net = new UDPNetwork();
-    LifeClient *life_client = new LifeClient((IPNetwork *)net, "localhost", 7654);
+    IPNetwork *net = (IPNetwork *)new TCPNetwork();
+    LifeClient *life_client = new LifeClient(net, "localhost", 7654);
     int status = life_client->start();
     if (status != 0) {
         LOG(ERROR) << "Could not start GoL LifeClient";

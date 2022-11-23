@@ -12,6 +12,14 @@
 #include "net/IPNetwork.h"
 #include "net/LogonMessage.h"
 #include "net/Message.h"
+#include <bits/stdc++.h>
+
+struct ClientInfo {
+    int client_id = -1;
+    IPAddress *address = nullptr;
+    unsigned int last_sequence_number = 0;
+    int last_completed_timestep = -1;
+};
 
 class BoardServer {
   public:
@@ -32,21 +40,34 @@ class BoardServer {
             LOG(WARN) << "Reducing required clients to maximum amount";
             this->client_count = (size_t)board_read->getHeight();
         }
-        if (client_count == (size_t)-1) {
-            throw std::invalid_argument("'client_count' was too high, maxmimum is " + std::to_string((size_t)-2));
+
+        if (client_count > (size_t)INT_MAX) {
+            throw std::invalid_argument("'client_count' was too high, maxmimum is " + std::to_string(INT_MAX));
         }
+
         board_write->clear();
     };
 
     /**
      * Frees all memory, which was allocated with new inside this class.
      */
-    ~BoardServer(){};
+    ~BoardServer() {
+        for (auto client : clients) {
+            delete client->address;
+            delete client;
+        }
+    };
 
     void start() {
+        LOG(INFO) << "Server started, using exactly " << client_count << " client(s) to calculate " << timesteps
+                  << " cycle(s)";
+
+        IPAddress client_address = IPAddress();
         while (timestep < timesteps) {
+            client_address.setAddr(0);
+            client_address.setPort(0);
+
             // receive bytes from a client
-            IPAddress client_address;
             char buffer[100];
             bzero(buffer, sizeof(buffer));
             net->receive(client_address, buffer, sizeof(buffer));
@@ -57,9 +78,6 @@ class BoardServer {
 
             // parse message
             message_type_t message_type = message->getType();
-            // LOG(DEBUG) << "Message (" << (ssize_t)message->getType() << ") received from " <<
-            // client_address.getAddr()
-            //            << ":" << client_address.getPort() << " with sequence number " << sequence_number;
 
             switch (message_type) {
             case message_type_t::logon: {
@@ -67,31 +85,24 @@ class BoardServer {
                 break;
             }
             case message_type_t::board_get: {
-                BoardGetMessage *bg_message = (BoardGetMessage *)message;
-                int x = bg_message->pos_x;
-                int y = bg_message->pos_y;
-                BoardGetMessage *reply = BoardGetMessage::createReply(sequence_number, x, y, board_read);
-                net->reply(client_address, reply, sizeof(BoardGetMessage));
-                delete reply;
+                BoardGetMessage *req = (BoardGetMessage *)buffer;
+                BoardGetMessage *rep =
+                    BoardGetMessage::createReply(sequence_number, req->pos_x, req->pos_y, board_read);
+                net->reply(client_address, rep, sizeof(BoardGetMessage));
+                delete rep;
                 break;
             }
             case message_type_t::board_set: {
-                BoardSetMessage *bs_message = (BoardSetMessage *)message;
-                int x = bs_message->pos_x;
-                int y = bs_message->pos_y;
-                life_status_t state = bs_message->state;
-                board_write->setPos(x, y, state);
-                BoardSetMessage *reply = BoardSetMessage::createReply(sequence_number);
-                net->reply(client_address, reply, sizeof(BoardSetMessage));
-                delete reply;
+                BoardSetMessage *req = (BoardSetMessage *)buffer;
+                board_write->setPos(req->pos_x, req->pos_y, req->state);
+                BoardSetMessage *rep = BoardSetMessage::createReply(sequence_number);
+                net->reply(client_address, rep, sizeof(BoardSetMessage));
+                delete rep;
                 break;
             }
             case message_type_t::barrier: {
-                BarrierMessage *b_message = (BarrierMessage *)message;
-                int client_id = b_message->client_id;
-                int finished_timestep = b_message->finished_timestep;
-                client_barrier_sequence_number[client_id] = sequence_number;
-                barrier(&client_address, finished_timestep);
+                BarrierMessage *req = (BarrierMessage *)buffer;
+                barrier(req->client_id, sequence_number, req->finished_timestep);
                 break;
             }
             default: {
@@ -103,144 +114,105 @@ class BoardServer {
     };
 
   private:
-    IPNetwork *net;                     // network object used for communication
-    size_t client_count;                // amount of required clients
-    Board *board_read;                  // read only for timestep n
-    Board *board_write;                 // write only for timestep n + 1
-    int timestep = 0;                   // current timestep
-    int timesteps;                      // how many timesteps we are going to simulate in total
-    std::vector<IPAddress *> addresses; // list of client addresses
-    std::vector<int> client_timesteps;  // map of client id to client current timestep
-    std::vector<unsigned int>
-        client_barrier_sequence_number; // map of client id to sequence number used in barrier message
+    IPNetwork *net;                    // network object used for communication
+    size_t client_count;               // amount of required clients
+    Board *board_read;                 // read only for timestep n
+    Board *board_write;                // write only for timestep n + 1
+    int timestep = 0;                  // current timestep
+    int timesteps;                     // how many timesteps we are going to simulate in total
+    std::vector<ClientInfo *> clients; // list of clients
 
     /**
      * This function is called, when a client connects to the server for the first time.
      * It stores the address of the client and determines the part of the board the client
      * has to work on.
      */
-    void logon(IPAddress *ip, int sequence_number) {
-        // add client to lists, if joined late or rejoined they can still work with current timestep
-        addresses.push_back(ip);
-        client_timesteps.push_back(timestep);
-        client_barrier_sequence_number.push_back(0);
+    void logon(IPAddress *client_address, unsigned int login_sequence_number) {
+        // register new client
+        int client_id = (int)clients.size();
+        ClientInfo *client_info = new ClientInfo();
+        client_info->client_id = client_id;
+        client_info->address = client_address;
+        client_info->last_sequence_number = login_sequence_number;
+        clients.push_back(client_info);
 
-        int client_id = (int)addresses.size() - 1;
-        LOG(INFO) << "[LOGIN] Client:" << client_id << " from " << ip->getAddr() << ":" << ip->getPort();
-
+        // calculate managed area for client
         int start_x, start_y, end_x, end_y;
-        if (client_count == 1) {
-            start_x = 0;
-            start_y = 0;
-            end_x = board_read->getWidth();
-            end_y = board_read->getHeight();
-        } else {
-            int rows_per_client = board_read->getHeight() / client_count;
-            int rows_for_last_client = rows_per_client + (board_read->getHeight() % client_count);
-            bool is_this_last_client = ((size_t)client_id == (client_count - 1));
-            int rows_for_this_client = !is_this_last_client ? rows_per_client : rows_for_last_client;
-            start_x = 0;
-            start_y = rows_per_client * client_id;
-            end_x = board_read->getWidth();
-            end_y = start_y + rows_for_this_client;
-        }
+        size_t rows_per_client = (size_t)board_read->getHeight() / client_count;
+        size_t remaining_rows = (size_t)board_read->getHeight() - (rows_per_client * client_count);
+        bool is_last_client = (size_t)client_id >= client_count - 1;
+        size_t rows_for_this_client = is_last_client ? rows_per_client + remaining_rows : rows_per_client;
+        start_x = 0;
+        start_y = rows_per_client * client_id;
+        end_x = board_read->getWidth();
+        end_y = start_y + rows_for_this_client;
 
-        LOG(INFO) << "[LOGIN] Client:" << client_id << " has area (" << start_x << "," << start_y << ") to (" << end_x
-                  << "," << end_y << ")";
+        // send client confirmation
+        LogonMessage *rep = LogonMessage::createReply(login_sequence_number, client_id, start_x, start_y, end_x, end_y,
+                                                      this->timesteps);
+        net->reply(*client_address, rep, sizeof(LogonMessage));
+        delete rep;
 
-        LogonMessage *message =
-            LogonMessage::createReply(sequence_number, client_id, start_x, start_y, end_x, end_y, timesteps);
-        net->reply(*ip, message, sizeof(LogonMessage));
-        delete message;
+        LOG(INFO) << "New client with id " << client_id << " and address " << client_address->getAddr() << ":"
+                  << client_address->getPort() << " registered";
     };
 
     /**
      * This function is the global barrier for interstepsynchronization. All clients must call
      * this function, before any of them gets a reply from the server. The reply can tell a client to
      * calculate the next timestep or inform him of the end of simulation.
-     *
-     * @param ip is the address of the calling client
-     * @param timestep is the finished timestep which the client is signalling
      */
-    void barrier(IPAddress *ip, int timestep) {
-        size_t index = getClientIdFromIP(ip);
-
-        if (index == (size_t)-1) {
-            LOG(WARN) << "Unkown client '" << ip->getAddr() << ":" << ip->getPort()
-                      << "' tried to use barrier function";
+    void barrier(int client_id, unsigned int barrier_sequence_number, int completed_timestep) {
+        // validate client id
+        if (client_id < 0 || (size_t)client_id >= clients.size()) {
+            LOG(WARN) << "Received barrier message with invalid client id " << client_id;
             return;
         }
 
-        LOG(INFO) << "[SIMULATION] [CYCLE-" << timestep << "] Client:" << index << " Done";
+        clients[client_id]->last_sequence_number = barrier_sequence_number;
+        clients[client_id]->last_completed_timestep = completed_timestep;
 
-        client_timesteps[index] = timestep + 1;
-        bool all_clients_done = true;
-        if (client_timesteps.size() < client_count) {
-            all_clients_done = false;
-        } else {
-            for (auto client_timestep : client_timesteps) {
-                if (client_timestep <= this->timestep) {
-                    all_clients_done = false;
-                    break;
-                }
+        LOG(INFO) << "Client with id " << client_id << " is done with step " << completed_timestep;
+
+        // check if all clients are done
+        if (clients.size() < client_count) {
+            return;
+        }
+
+        for (auto client : clients) {
+            if (client->last_completed_timestep < timestep) {
+                return;
             }
         }
-        if (all_clients_done) {
-            LOG(INFO) << "[SIMULATION] [CYCLE-" << timestep << "] Completed";
-            // copy everything from board_write to board_read and clear board_write
-            board_read->clear();
-            for (int x = 0; x < board_read->getWidth(); x++) {
-                for (int y = 0; y < board_read->getHeight(); y++) {
-                    board_read->setPos(x, y, board_write->getPos(x, y));
-                }
-            }
-            board_write->clear();
 
-            this->timestep += 1;
-            // must be done to trigger possible UI refresh
-            board_read->setCurrentStep((size_t)timestep);
-            board_write->setCurrentStep((size_t)timestep);
-            notifyAll();
+        // all clients are done, swap boards and signal clients to continue
+        LOG(INFO) << "All clients have completed step " << timestep;
+        timestep += 1;
+        board_read->clear();
+        for (int x = 0; x < board_write->getWidth(); x++) {
+            for (int y = 0; y < board_write->getHeight(); y++) {
+                board_read->setPos(x, y, board_write->getPos(x, y));
+            }
         }
+        board_write->clear();
+        notifyAll();
     };
 
     /**
-     * @brief Returns a clients id from their ip
-     * @param ip ip of the client
-     * @return On success, id of the client is returned. On failure, -1 is returned
-     */
-    size_t getClientIdFromIP(IPAddress *ip) {
-        size_t index = (size_t)-1;
-        for (size_t i = 0; i < addresses.size(); i++) {
-            auto address = addresses[i];
-            if ((*address) == (*ip)) {
-                index = i;
-                break;
-            }
-        }
-        return index;
-    }
-
-    /**
      * This function tells a client, that it can continue to work or that the end of the simulation is reached.
-     *
-     * @param ip is the address of the client which should be notified
      */
-    void notify(IPAddress *ip) {
-        size_t index = getClientIdFromIP(ip);
-        if (index == (size_t)-1)
-            return;
-        BarrierMessage *msg = BarrierMessage::createReply(client_barrier_sequence_number[index], index);
-        net->reply(*ip, msg, sizeof(BarrierMessage));
-        delete msg;
+    void notify(int client_id) {
+        BarrierMessage *rep = BarrierMessage::createReply(clients[client_id]->last_sequence_number, client_id);
+        net->reply(*clients[client_id]->address, rep, sizeof(BarrierMessage));
+        delete rep;
     };
 
     /**
      * The more general notify, which sends the same notification to all clients.
      */
     void notifyAll() {
-        for (auto client : addresses) {
-            notify(client);
+        for (ClientInfo *client : clients) {
+            notify(client->client_id);
         }
     };
 };

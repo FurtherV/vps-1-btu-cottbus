@@ -7,6 +7,7 @@ SRC_FILES = \
 	gui/BoardDrawingWindow.cc \
 	misc/Log.cc \
 	net/UDPNetwork.cc \
+	net/TCPNetwork.cc \
 
 
 SRC_SERVER = server.cc

@@ -2,14 +2,13 @@
 #define LIFECLIENT_H
 
 #include "board/LocalBoard.h"
+#include "misc/Log.h"
 #include "net/BarrierMessage.h"
 #include "net/BoardGetMessage.h"
 #include "net/BoardSetMessage.h"
 #include "net/IPAddress.h"
 #include "net/IPNetwork.h"
 #include "net/LogonMessage.h"
-
-#include "misc/Log.h"
 
 /*
  * This class represents a LifeClient which connects to a boardserver, and then
@@ -35,8 +34,8 @@ class LifeClient {
      * @return a -1 if logon failed, else 0
      */
     int start() {
-        LOG(INFO) << "[INIT] Started";
         char buffer[100];
+        LOG(INFO) << "Loggin into server...";
         LogonMessage *request = LogonMessage::createRequest(getNextSequenceNumber());
         ssize_t received_bytes = net->request(server, request, sizeof(LogonMessage), buffer, sizeof(buffer));
         delete request;
@@ -47,9 +46,8 @@ class LifeClient {
         y1 = result->start_y;
         x2 = result->end_x;
         y2 = result->end_y;
-        LOG(INFO) << "[LOGIN] Logged in as Client:" << client_id;
-        LOG(INFO) << "[LOGIN] Assigned area (" << x1 << "," << y1 << ") to (" << x2 << "," << y2 << ") for "
-                  << timesteps << " steps";
+        LOG(INFO) << "[CLIENT-" << client_id << "] "
+                  << "Login completed";
         return received_bytes > 0 ? 0 : -1;
     };
 
@@ -58,14 +56,15 @@ class LifeClient {
      */
     void loop() {
         while (timestep < timesteps) {
+            LOG(INFO) << "[CLIENT-" << client_id << "] "
+                      << "Simulating cycle " << timestep;
             makeStep();
+            LOG(INFO) << "[CLIENT-" << client_id << "] "
+                      << "Signaling doneness to server";
             char buffer[100];
             BarrierMessage *request = BarrierMessage::createRequest(getNextSequenceNumber(), client_id, timestep);
             net->request(server, request, sizeof(BarrierMessage), buffer, sizeof(buffer));
-            BarrierMessage *result = (BarrierMessage *)buffer;
-            // if (result->client_id == client_id && result->continueNext) {
             timestep++;
-            //}
         }
     };
 

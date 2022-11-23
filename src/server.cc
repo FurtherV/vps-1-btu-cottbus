@@ -6,7 +6,7 @@
 #include "gui/BoardDrawingWindow.h"
 #include "net/IPAddress.h"
 #include "net/IPNetwork.h"
-#include "net/UDPNetwork.h"
+#include "net/TCPNetwork.h"
 
 using namespace std;
 using namespace GUI;
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         LOG(WARN) << "'clients' parameter was zero, simulation will be skipped";
     }
 
-    UDPNetwork *net = new UDPNetwork(7654);
+    IPNetwork *net = (IPNetwork *)new TCPNetwork(7654, client_count);
     Board *board_read = new LocalBoard(board_width, board_height);
     Board *board_write = new LocalBoard(board_width, board_height);
     if (!vm["input"].defaulted()) {
@@ -98,8 +98,7 @@ int main(int argc, char **argv) {
         BoardDrawingWindow *window_write = new BoardDrawingWindow(board_write, 800, 800);
     }
     if (simulation_steps > 0 && client_count > 0) {
-        BoardServer *board_server =
-            new BoardServer((IPNetwork *)net, client_count, board_read, board_write, simulation_steps);
+        BoardServer *board_server = new BoardServer(net, client_count, board_read, board_write, simulation_steps);
         board_server->start();
     }
 
@@ -107,5 +106,7 @@ int main(int argc, char **argv) {
         LOG(DEBUG) << "Exporting board to " << vm["output"].as<string>();
         board_read->exportAll(vm["output"].as<string>());
     }
+
+    delete net;
     return 0;
 }
