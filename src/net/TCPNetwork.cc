@@ -13,6 +13,12 @@ TCPNetwork::TCPNetwork(short port, int queue_size) {
         throw std::system_error(errno, std::generic_category(), "Could not create server socket");
     }
 
+    // allow socket to reuse IP / Port of another socket which is closed but still in TIME_WAIT state
+
+    int optval = 1;
+    setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+    setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
     IPAddress ipaddress = IPAddress(port);
 
     // try for 60 tries to bind the socket to the address and port, if the port is still in used, retry after 1 second.
