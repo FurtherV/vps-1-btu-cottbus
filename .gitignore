@@ -150,3 +150,5 @@ _deps
 tmp/
 bin/
 VPS1_Gruppe1_Abgabe*
+logs/
+benchmarks/

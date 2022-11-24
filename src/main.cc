@@ -2,7 +2,10 @@
 #include "gui/BoardDrawingWindow.h"
 #include "misc/Log.h"
 #include <boost/program_options.hpp>
+#include <chrono>
+#include <fstream>
 #include <getopt.h>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,6 +13,13 @@
 
 using namespace std;
 using namespace GUI;
+
+int write_benchmark_file(string file_path, long time) {
+    ofstream benchmark_file(file_path);
+    benchmark_file << time;
+    benchmark_file.close();
+    return 1;
+}
 
 int main(int argc, char *argv[]) {
     // Configure logger before usage.
@@ -34,9 +44,8 @@ int main(int argc, char *argv[]) {
         ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                    //
         ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")        //
         ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")      //
-        ("profile,", po::value<string>()->default_value(""),
-         "Output file for profiler") //
-        ("gui,g", "Enable GUI");     //
+        ("profile,", po::value<string>(), "Output file for profiler\nNot compatible with -g")                  //
+        ("gui,g", "Enable GUI");                                                                               //
 
     // read arguments
     po::variables_map vm;
@@ -103,8 +112,14 @@ int main(int argc, char *argv[]) {
             cin.get();
         }
     } else {
+        auto start = chrono::high_resolution_clock::now();
         for (int i = 0; i < simulation_steps; i++) {
             board->step();
+        }
+        auto end = chrono::high_resolution_clock::now();
+        if (vm.count("profile")) {
+            long time = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            write_benchmark_file(vm["profile"].as<string>(), time);
         }
     }
 

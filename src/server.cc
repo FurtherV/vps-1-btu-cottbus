@@ -11,6 +11,13 @@
 using namespace std;
 using namespace GUI;
 
+int write_benchmark_file(string file_path, long time) {
+    ofstream benchmark_file(file_path);
+    benchmark_file << time;
+    benchmark_file.close();
+    return 1;
+}
+
 int main(int argc, char **argv) {
     // configure logger before usage.
     LOGCFG = {};
@@ -36,7 +43,7 @@ int main(int argc, char **argv) {
         ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")      //
         ("clients,c", po::value<int>()->default_value(1), "Required connected clients")                        //
         ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n  0) UDP\n  1) TCP")       //
-        ("profile,", po::value<string>()->default_value(""), "Output file for profiler")                       //
+        ("profile,", po::value<string>(), "Output file for profiler\nNot compatible with -g")                  //
         ("gui,g", "Enable GUI");                                                                               //
 
     // read arguments
@@ -130,16 +137,27 @@ int main(int argc, char **argv) {
     }
 
     BoardServer *board_server = new BoardServer(net, client_count, board_read, board_write, simulation_steps);
+    auto start = chrono::high_resolution_clock::now();
     board_server->start();
-    delete board_server;
+    auto end = chrono::high_resolution_clock::now();
+    if (vm.count("profile")) {
+        long time = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        write_benchmark_file(vm["profile"].as<string>(), time);
+    }
 
     if (!vm["output"].defaulted()) {
         LOG(DEBUG) << "Exporting board to " << vm["output"].as<string>();
         board_read->exportAll(vm["output"].as<string>());
     }
 
-    delete window_read;
-    delete window_write;
+    if (window_read != nullptr) {
+        delete window_read;
+    }
+
+    if (window_write != nullptr) {
+        delete window_write;
+    }
+
     delete board_server;
     delete net;
     return 0;

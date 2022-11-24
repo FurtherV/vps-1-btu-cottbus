@@ -23,7 +23,7 @@ TCPNetwork::TCPNetwork(short port, int queue_size) {
         if (bind(socket_fd, (const sockaddr *)&ipaddress, sizeof(ipaddress)) == 0) {
             break;
         } else {
-            if (errno == EADDRINUSE) {
+            if (errno == EADDRINUSE || errno == 98) {
                 retries++;
                 sleep(1);
             }

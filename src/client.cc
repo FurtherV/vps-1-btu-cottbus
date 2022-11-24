@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     } else {
         life_client->loop();
     }
+
     delete life_client;
     return 0;
 }
