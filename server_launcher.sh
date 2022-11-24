@@ -24,7 +24,7 @@ while getopts 'i:o:r:c:n:p:' OPTION; do
             PROFILE_OUTPUT="$OPTARG"
         ;;
         ?)
-            echo "script usage: $(basename \$0) [-i PATH] [-o PATH] [-r NUMBER] [-c NUMBER] [-n 0 or 1]" >&2
+            echo "script usage: $(basename \$0) [-i PATH] [-o PATH] [-p PATH] [-r NUMBER] [-c NUMBER] [-n 0 or 1]" >&2
             exit 1
         ;;
     esac
