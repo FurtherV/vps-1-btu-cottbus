@@ -37,7 +37,7 @@ INCLUDES = -I$(INC_DIR)
 XLIBDIR   = /usr/X11R6/lib/
 XLIBS   = -L$(XLIBDIR) -lX11
 PTHREADLIBS = -lpthread
-BOOSTLIBS = -lboost_program_options
+BOOSTLIBS = -L/home/vpsi1/boost/lib -lboost_program_options
 LIBS = $(XLIBS) $(PTHREADLIBS) $(BOOSTLIBS)
 
 TARGET_SERVER = $(BIN_DIR)server
