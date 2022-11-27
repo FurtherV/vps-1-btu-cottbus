@@ -3,6 +3,7 @@
 SRC_FILES = \
 	board/LocalBoard.cc \
 	board/BoardServer.cc \
+	client/LifeClient.cc \
 	gui/DrawingWindow.cc \
 	gui/BoardDrawingWindow.cc \
 	misc/Log.cc \
@@ -37,8 +38,9 @@ INCLUDES = -I$(INC_DIR)
 XLIBDIR   = /usr/X11R6/lib/
 XLIBS   = -L$(XLIBDIR) -lX11
 PTHREADLIBS = -lpthread
-BOOSTLIBS = -L/home/vpsi1/boost/lib -lboost_program_options
-LIBS = $(XLIBS) $(PTHREADLIBS) $(BOOSTLIBS)
+BOOSTLIBDIR = -/home/vpsi1/boost/lib
+BOOSTLIB = -L$(BOOSTLIBDIR) -lboost_program_options
+LIBS = $(XLIBS) $(PTHREADLIBS) $(BOOSTLIB)
 
 TARGET_SERVER = $(BIN_DIR)server
 TARGET_CLIENT = $(BIN_DIR)client
