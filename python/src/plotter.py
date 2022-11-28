@@ -1,22 +1,37 @@
 import csv
+import glob
 import matplotlib.pyplot as plt
 import statistics as stats # median function
+
+def getAllFiles():    
+    # All files and directories ending with .txt with depth of 2 folders, ignoring names beginning with a dot:
+    return glob.glob("python/src/csv/*/*.csv")
+
 
 def extractCSV(path):
     file = open(path)
     csvreader = csv.reader(file)   
 
+    header = []
+    id = -1
+    foundHeader = False
+
     xValues = []
     yValues = []
     for row in csvreader:
         if not (row[0].startswith("#")):
-            xValues.append(row[0])
-            yValues.append(row[1])
+            if not foundHeader:
+                header = row
+            else:
+                xValues.append(row[0])
+                yValues.append(row[1])
+    
+    if (header[0] == "id"):
+        id = int(header[1])
 
     file.close()
-    
 
-    return xValues, yValues
+    return id, xValues, yValues
 
 
 def makeMedian(xValues, yValues):
@@ -51,16 +66,6 @@ def makeMedian(xValues, yValues):
 #############################################
 #############################################
 #############################################
-
-stepsOverTimePath = [
-    'csv/steps-over-time/steps_over_time_local-100-steps.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-01-clients-tcp.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-01-clients-udp.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-10-clients-tcp.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-10-clients-udp.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-20-clients-tcp.csv',
-    'csv/steps-over-time/steps_over_time_server-100-steps-20-clients-udp.csv',
-]
 
 stepsOverTimeLabel = [
     'Local',
@@ -100,7 +105,7 @@ SoT = plt.figure('Steps over Time')
 plt.figure(SoT)
 
 for i in range(len(stepsOverTimePath)):
-    xValues, yValues = extractCSV(stepsOverTimePath[i])
+    id, xValues, yValues = extractCSV(stepsOverTimePath[i])
 
     xMedian, yMedian = makeMedian(xValues, yValues)
 
@@ -119,7 +124,7 @@ CoT = plt.figure('Clients over Time')
 plt.figure(CoT)
 
 for i in range(len(clientsOverTimePath)):
-    xValues, yValues = extractCSV(clientsOverTimePath[i])
+    id, xValues, yValues = extractCSV(clientsOverTimePath[i])
 
     xMedian, yMedian = makeMedian(xValues, yValues)
 
