@@ -27,10 +27,10 @@ CXX_FILE_ENDING = .cc
 
 # configure compiler
 #ASM = g++
-ASM = mpic++
 #CXX = g++
-CXX = mpic++
 #LD	= g++
+ASM = mpic++
+CXX = mpic++
 LD = mpic++
 
 CXXFLAGS = -g -Wall -std=c++11
@@ -87,6 +87,8 @@ $(TMP_SUBDIRS) :
 $(TMP_DIR)%.o : $(SRC_DIR)%$(CXX_FILE_ENDING) $(TMP_SUBDIRS)
 	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $<
 
+$(shell mkdir -p $(BIN_DIR))
+
 depend: $(SRCS) $(TMP_SUBDIRS)
 	$(CXX) -MD -E $(CXXFLAGS) $(SRCS) $(INCLUDES) > /dev/null
 	mv *.d $(DEP_DIR)
@@ -100,7 +102,7 @@ local: $(TARGET_LOCAL)
 mpi: $(TARGET_MPI)
 
 clean:
-	rm -rf $(OBJS) $(OBJS_SERVER) $(OBJS_CLIENT) $(OBJS_LOCAL) $(TARGET_SERVER) $(TARGET_CLIENT) $(TARGET_LOCAL) $(DEPS) $(TMP_SUBDIRS)
+	rm -rf $(OBJS) $(OBJS_SERVER) $(OBJS_CLIENT) $(OBJS_LOCAL) $(OBJS_MPI) $(TARGET_SERVER) $(TARGET_CLIENT) $(TARGET_LOCAL) $(TARGET_MPI) $(DEPS) $(TMP_SUBDIRS)
 
 # generated dependencies
 -include $(DEPS)
