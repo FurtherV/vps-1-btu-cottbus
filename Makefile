@@ -3,7 +3,9 @@
 SRC_FILES = \
 	board/LocalBoard.cc \
 	board/BoardServer.cc \
+	board/BoardServerMPISimple.cc \
 	client/LifeClient.cc \
+	client/LifeClientMPISimple.cc \
 	gui/DrawingWindow.cc \
 	gui/BoardDrawingWindow.cc \
 	misc/Log.cc \
