@@ -22,16 +22,18 @@ def extractCSV(path):
         if not (row[0].startswith("#")):
             if not foundHeader:
                 header = row
+                foundHeader = True
             else:
                 xValues.append(row[0])
                 yValues.append(row[1])
     
-    if (header[0] == "id"):
+    if (header[0] == "header"):
         id = int(header[1])
+        label = header[2]
 
     file.close()
 
-    return id, xValues, yValues
+    return id, label, xValues, yValues
 
 
 def makeMedian(xValues, yValues):
@@ -67,31 +69,11 @@ def makeMedian(xValues, yValues):
 #############################################
 #############################################
 
-stepsOverTimeLabel = [
-    'Local',
-    '1 Client TCP',
-    '1 Client UDP',
-    '10 Client TCP',
-    '10 Client UDP',
-    '20 Client TCP',
-    '20 Client UDP',
+titlesAndAxisLabels = [
+    ['Steps over Time', 'steps', 'time in milliseconds'],           # id = 0
+    ['Clients over Time', 'clients', 'time in milliseconds']        # id = 1
+    # elif id == 2: # TODO erweiterung
 ]
-
-
-clientsOverTimePath = [ 
-    'csv/clients-over-time/clients_over_time_server-20-steps-1to20-clients-tcp.csv',
-    'csv/clients-over-time/clients_over_time_server-20-steps-1to20-clients-udp.csv'
-]
-
-clientsOverTimeLabel = [
-    '20 Steps TCP',
-    '20 Steps UDP'
-]
-
-
-graphLabels = [['steps'  , 'time in milliseconds'],
-               ['clients', 'time in milliseconds']]
-
 
 #############################################
 #############################################
@@ -102,41 +84,60 @@ print("start")
 
 # plots steps over time
 SoT = plt.figure('Steps over Time')
-plt.figure(SoT)
+plt.title(titlesAndAxisLabels[0][0])
+plt.xlabel(titlesAndAxisLabels[0][1])
+plt.ylabel(titlesAndAxisLabels[0][2])   
 
-for i in range(len(stepsOverTimePath)):
-    id, xValues, yValues = extractCSV(stepsOverTimePath[i])
-
-    xMedian, yMedian = makeMedian(xValues, yValues)
-
-    plt.plot(xMedian, yMedian, label=stepsOverTimeLabel[i])
-    #plt.scatter(xMedian,yMedian)
-
-plt.xlabel(graphLabels[0][0])
-plt.ylabel(graphLabels[0][1])    
-plt.title('Steps over Time')
-plt.legend()
-SoT.savefig('fig/steps-over-time.png')
 
 
 # plots clients over time
 CoT = plt.figure('Clients over Time')
-plt.figure(CoT)
+plt.title(titlesAndAxisLabels[1][0])
+plt.xlabel(titlesAndAxisLabels[1][1])
+plt.ylabel(titlesAndAxisLabels[1][2])
 
-for i in range(len(clientsOverTimePath)):
-    id, xValues, yValues = extractCSV(clientsOverTimePath[i])
+
+
+# elif id == 2: # TODO erweiterung
+
+
+
+for path in getAllFiles():
+    id, label, xValues, yValues = extractCSV(path)
 
     xMedian, yMedian = makeMedian(xValues, yValues)
 
-    plt.plot(xMedian, yMedian, label=clientsOverTimeLabel[i])
-    #plt.scatter(xMedian,yMedian)
+    if id == 0: # steps over time
+        plt.figure(SoT)
+        plt.plot(xMedian, yMedian, label=label)
+    
+    
+    
+    elif id == 1: # clients over time
+        plt.figure(CoT)
+        plt.scatter(xMedian, yMedian, label=label)
 
-plt.xlabel(graphLabels[1][0])
-plt.ylabel(graphLabels[1][1])    
-plt.title('Clients over Time')
+    # elif id == 2: # TODO erweiterung
+
+
+# legende setzen
+plt.figure(SoT)
 plt.legend()
+
+
+plt.figure(CoT)
+plt.legend()
+
+# elif id == 2: # TODO erweiterung
+
+
+# save plots
+SoT.savefig('python/src/fig/steps-over-time.png')
+CoT.savefig('python/src/fig/clients-over-time.png')
+# elif id == 2: # TODO erweiterung
+
 plt.show()
-CoT.savefig('fig/clients-over-time.png')
+
 
 print("finished")
 
