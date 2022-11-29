@@ -2,6 +2,7 @@ import csv
 import glob
 import matplotlib.pyplot as plt
 import statistics as stats # median function
+import numpy as np
 
 def getAllFiles():    
     # All files and directories ending with .txt with depth of 2 folders, ignoring names beginning with a dot:
@@ -38,14 +39,14 @@ def extractCSV(path):
 
 def makeMedian(xValues, yValues):
     medianX = []
-    medianY = []
+    medianY = [] 
 
     # append char that marks end of values
     xValues.append('#')
     yValues.append('#')
 
-    currentX = '0'
-    currentYValues = [int(0)]
+    currentX = xValues[0]
+    currentYValues = []
 
 
     for i in range(len(xValues)):
@@ -102,6 +103,7 @@ plt.ylabel(titlesAndAxisLabels[1][2])
 
 
 
+
 for path in getAllFiles():
     id, label, xValues, yValues = extractCSV(path)
 
@@ -129,6 +131,20 @@ plt.figure(CoT)
 plt.legend()
 
 # elif id == 2: # TODO erweiterung
+
+
+
+# some important settings so that the graph looks good
+axes = plt.figure(CoT).gca() 
+# set axis ticks to only have integers
+axes.xaxis.get_major_locator().set_params(integer=True) 
+#axes.xaxis.get_minor_locator().set_params(integer=True)
+
+# set axis ticks to have more ticks
+start, end = axes.get_xlim()
+start = 0
+axes.xaxis.set_ticks(np.arange(start, end, 1))
+
 
 
 # save plots
