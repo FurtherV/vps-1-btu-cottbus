@@ -6,10 +6,20 @@
 
 class BoardServerMPISimple {
   public:
+    /**
+     * @brief Creates a server using two boards, BOARD_READ and BOARD_WRITE, which must have equal dimensions. The
+     * server will simulate TIMESTEPS steps of the Game of Life.
+     * @param board_read Board mostly used for reading, but also for writing
+     * @param board_write Board only used for writing
+     * @param timesteps Number of steps to simulate
+     */
     BoardServerMPISimple(Board *board_read, Board *board_write, int timesteps);
 
     virtual ~BoardServerMPISimple();
 
+    /**
+     * @brief Starts the server.
+     */
     void start();
 
   private:

@@ -6,10 +6,18 @@
 
 class LifeClientMPISimple {
   public:
+    /**
+     * @brief Creates a client which will help a server simulate the Game of Life by simulating portions of the overall
+     * board.
+     * @param root_rank rank / id of the server, usually 0
+     */
     LifeClientMPISimple(int root_rank);
 
     virtual ~LifeClientMPISimple();
 
+    /**
+     * @brief Starts the client.
+     */
     void start();
 
   private:
