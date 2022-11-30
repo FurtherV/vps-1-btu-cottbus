@@ -1,6 +1,6 @@
-#include "board/BoardServerMPISimple.h"
+#include "board/BoardServerMPIAdvanced.h"
 #include "board/LocalBoard.h"
-#include "client/LifeClientMPISimple.h"
+#include "client/LifeClientMPIAdvanced.h"
 #include "misc/Log.h"
 #include "misc/Stopwatch.h"
 #include <boost/program_options.hpp>
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     }
     std::string output_path = "";
     if (vm.count("output")) {
-        input_path = vm["input"].as<std::string>();
+        output_path = vm["output"].as<std::string>();
     }
     int simulation_steps = vm["steps"].as<int>();
     int board_width = vm["width"].as<int>();
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
             board_write->clear();
 
             Stopwatch stopwatch;
-            BoardServerMPISimple server = BoardServerMPISimple(board_read, board_write, simulation_steps);
+            BoardServerMPIAdvanced server = BoardServerMPIAdvanced(board_read, board_write, simulation_steps);
             stopwatch.start();
             server.start();
             stopwatch.stop();
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
             delete board_write;
         } else {
             // is client
-            LifeClientMPISimple client = LifeClientMPISimple(server_rank);
+            LifeClientMPIAdvanced client = LifeClientMPIAdvanced(server_rank);
             client.start();
         }
     } catch (const std::exception &e) {
