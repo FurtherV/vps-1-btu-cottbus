@@ -1,6 +1,8 @@
 #include "board/BoardServerMPIAdvanced.h"
+#include "board/BoardServerMPISimple.h"
 #include "board/LocalBoard.h"
 #include "client/LifeClientMPIAdvanced.h"
+#include "client/LifeClientMPISimple.h"
 #include "misc/Log.h"
 #include "misc/Stopwatch.h"
 #include <boost/program_options.hpp>
@@ -19,14 +21,15 @@ int main(int argc, char **argv) {
 
     // define available arguments
     po::options_description desc("Usage", 1024, 512);
-    desc.add_options()                                                                                    //
-        ("help,", "Print help message")                                                                   //
-        ("input,i", po::value<string>(), "Input file\nMust be in the correct .rle format")                //
-        ("output,o", po::value<string>(), "Output file\nExisting files will be overwriten")               //
-        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                               //
-        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")   //
-        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i") //
-        ("profile,", po::value<string>(), "Output file for profiler");                                    //
+    desc.add_options()                                                                                      //
+        ("help,", "Print help message")                                                                     //
+        ("input,i", po::value<string>(), "Input file\nMust be in the correct .rle format")                  //
+        ("output,o", po::value<string>(), "Output file\nExisting files will be overwriten")                 //
+        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                 //
+        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")     //
+        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")   //
+        ("profile,", po::value<string>(), "Output file for profiler")                                       //
+        ("mode,m", po::value<string>()->default_value("simple"), "Client-/Server Mode\nsimple or advanced");//
 
     // read arguments and store in a map
     po::variables_map vm;
@@ -54,6 +57,7 @@ int main(int argc, char **argv) {
     if (vm.count("profile")) {
         profiler_output = vm["profile"].as<std::string>();
     }
+    string mode = vm["mode"].as<std::string>();
 
     // validate arguments
     if (simulation_steps <= 0) {
@@ -66,6 +70,10 @@ int main(int argc, char **argv) {
     }
     if (board_height <= 0) {
         LOG(ERROR) << "'height' must be greater than 0, was " << board_height;
+        return 1;
+    }
+    if ((mode != "simple") | (mode != "advanced")) {
+        LOG(ERROR) << "'mode' must be 'simple' or 'advanced' " << mode;
         return 1;
     }
 
@@ -87,7 +95,14 @@ int main(int argc, char **argv) {
             board_write->clear();
 
             Stopwatch stopwatch;
-            BoardServerMPIAdvanced server = BoardServerMPIAdvanced(board_read, board_write, simulation_steps);
+            
+            BoardServerMPISimple server = BoardServerMPISimple(board_read, board_write, simulation_steps);
+
+            if (mode == "advanced")
+            {
+                BoardServerMPIAdvanced server = BoardServerMPIAdvanced(board_read, board_write, simulation_steps);
+            }
+
             stopwatch.start();
             server.start();
             stopwatch.stop();
@@ -104,7 +119,14 @@ int main(int argc, char **argv) {
             delete board_write;
         } else {
             // is client
-            LifeClientMPIAdvanced client = LifeClientMPIAdvanced(server_rank);
+            
+            LifeClientMPISimple client = LifeClientMPISimple(server_rank);
+
+            if (mode == "advanced")
+            {
+                LifeClientMPIAdvanced client = LifeClientMPIAdvanced(server_rank);
+            }
+
             client.start();
         }
     } catch (const std::exception &e) {
