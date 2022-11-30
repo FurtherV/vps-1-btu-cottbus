@@ -26,11 +26,10 @@ int main(int argc, char **argv) {
         ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                               //
         ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")   //
         ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i") //
-        ("profile,", po::value<string>(), "Output file for profiler\nNot compatible with -g");            //
+        ("profile,", po::value<string>(), "Output file for profiler");                                    //
 
-    // read arguments
+    // read arguments and store in a map
     po::variables_map vm;
-
     try {
         po::store(po::command_line_parser(argc, argv).options(desc).positional({}).allow_unregistered().run(), vm);
         po::notify(vm);
@@ -71,6 +70,7 @@ int main(int argc, char **argv) {
     }
 
     MPI::Init(argc, argv);
+
     try {
         // main code here
         int server_rank = 0;
@@ -86,11 +86,18 @@ int main(int argc, char **argv) {
             LocalBoard *board_write = new LocalBoard(board_width, board_height);
             board_write->clear();
 
+            Stopwatch stopwatch;
             BoardServerMPISimple server = BoardServerMPISimple(board_read, board_write, simulation_steps);
+            stopwatch.start();
             server.start();
+            stopwatch.stop();
 
             if (output_path.length() > 0) {
                 board_read->exportAll(output_path);
+            }
+
+            if (profiler_output.length() > 0) {
+                stopwatch.to_file(profiler_output);
             }
 
             delete board_read;

@@ -2,6 +2,8 @@
 #define STOPWATCH_H
 
 #include <chrono>
+#include <fstream>
+#include <iostream>
 #include <misc/Log.h>
 #include <string>
 #include <vector>
@@ -27,6 +29,21 @@ class Stopwatch {
         timings.push_back(duration);
         return duration;
     };
+
+    /**
+     * @brief Writes all measured timings to a file, each timing is on its own line.
+     * @param path Path to the file
+     */
+    void to_file(std::string path) {
+        std::ofstream csv;
+        csv.open(path, ios::out | ios::trunc);
+        if (csv.is_open()) {
+            for (auto element : timings) {
+                csv << element << "\n";
+            }
+            csv.close();
+        }
+    }
 
     std::vector<long> timings;
 
