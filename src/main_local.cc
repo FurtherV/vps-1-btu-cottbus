@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
     // Print help text and exit on --help
     if (vm.count("help")) {
-        cerr << "Game of Life Server" << endl;
+        cerr << "Game of Life Local" << endl;
         cerr << desc << endl;
         return 0;
     }
