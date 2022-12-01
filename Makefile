@@ -47,7 +47,7 @@ INCLUDES = -I$(INC_DIR)
 XLIBDIR   = /usr/X11R6/lib/
 XLIBS   = -L$(XLIBDIR) -lX11
 PTHREADLIBS = -lpthread
-BOOSTLIBDIR = -/home/vpsi1/boost/lib
+BOOSTLIBDIR = $(HOME)/boost/lib
 BOOSTLIB = -L$(BOOSTLIBDIR) -lboost_program_options
 LIBS = $(XLIBS) $(PTHREADLIBS) $(BOOSTLIB)
 
