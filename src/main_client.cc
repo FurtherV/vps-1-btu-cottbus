@@ -26,6 +26,8 @@ int main(int argc, char **argv) {
     po::options_description desc("Usage", 1024, 512);
     desc.add_options()                                                                                //
         ("help,", "Print help message")                                                               //
+        ("host,", po::value<std::string>()->default_value("localhost"), "Server address")             //
+        ("port,", po::value<short>()->default_value(7654), "Server port")                             //
         ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n0) UDP\n1) TCP"); //
 
     // read arguments
@@ -47,6 +49,9 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    std::string server_name = vm["host"].as<std::string>();
+    short server_port = vm["port"].as<short>();
+
     IPNetwork *net;
     int network_type = vm["network"].as<int>();
     switch (network_type) {
@@ -66,7 +71,7 @@ int main(int argc, char **argv) {
     }
     }
 
-    LifeClient *life_client = new LifeClient(net, "localhost", 7654);
+    LifeClient *life_client = new LifeClient(net, server_name.c_str(), server_port);
     int status = life_client->start();
     if (status != 0) {
         LOG(ERROR) << "Could not start GoL LifeClient";
