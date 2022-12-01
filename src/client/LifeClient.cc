@@ -1,6 +1,6 @@
 #include "client/LifeClient.h"
 
-LifeClient::LifeClient(IPNetwork *net, const char *servername, short port, bool wait)
+LifeClient::LifeClient(IPNetwork *net, const char *servername, short port)
     : net(net), server(IPAddress(servername, port)) {}
 
 LifeClient::~LifeClient() {}

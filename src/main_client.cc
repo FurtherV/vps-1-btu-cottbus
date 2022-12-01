@@ -24,10 +24,9 @@ int main(int argc, char **argv) {
 
     // define available arguments
     po::options_description desc("Usage", 1024, 512);
-    desc.add_options()                                                                                               //
-        ("help,", "Print help message")                                                                              //
-        ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n0) UDP\n1) TCP")                 //
-        ("wait,w", po::bool_switch()->default_value(false), "If set, the client will wait until there is a server"); //
+    desc.add_options()                                                                                //
+        ("help,", "Print help message")                                                               //
+        ("network,n", po::value<int>()->default_value(0), "IP Network type\nTypes:\n0) UDP\n1) TCP"); //
 
     // read arguments
     po::variables_map vm;
@@ -66,9 +65,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     }
-    bool wait = vm["wait"].as<bool>();
 
-    LifeClient *life_client = new LifeClient(net, "localhost", 7654, wait);
+    LifeClient *life_client = new LifeClient(net, "localhost", 7654);
     int status = life_client->start();
     if (status != 0) {
         LOG(ERROR) << "Could not start GoL LifeClient";

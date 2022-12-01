@@ -24,7 +24,7 @@ class LifeClient {
      * @param servername is the name of the server for example "ep", not an ip address in ascii-representation
      * @param port is the portnumber the boardserver listens
      */
-    LifeClient(IPNetwork *net, const char *servername, short port, bool wait);
+    LifeClient(IPNetwork *net, const char *servername, short port);
 
     virtual ~LifeClient();
 
