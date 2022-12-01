@@ -2,9 +2,10 @@
 #define BOARDSERVERMPIADVANCED_H
 
 #include "board/Board.h"
+#include "board/BoardServerMPI.h"
 #include <mpi.h>
 
-class BoardServerMPIAdvanced {
+class BoardServerMPIAdvanced : public BoardServerMPI {
   public:
     /**
      * @brief Creates a server using two boards, BOARD_READ and BOARD_WRITE, which must have equal dimensions. The
