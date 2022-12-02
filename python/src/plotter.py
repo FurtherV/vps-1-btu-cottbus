@@ -38,31 +38,20 @@ def extractCSV(path):
 
 
 def makeMedian(xValues, yValues):
-    medianX = []
-    medianY = [] 
+    value_map = {}
+    for i in range(min(len(xValues), len(yValues))):
+        x_value = float(xValues[i])
+        y_value = float(yValues[i])
+        if not x_value in value_map:
+            value_map[x_value] = []
+        value_map[x_value].append(y_value)
 
-    # append char that marks end of values
-    xValues.append('#')
-    yValues.append('#')
+    for x in value_map.keys():
+        values = value_map[x]
+        median = stats.median(values)
+        value_map[x] = median
 
-    currentX = xValues[0]
-    currentYValues = []
-
-
-    for i in range(len(xValues)):
-
-        if currentX == xValues[i]: # needs '#' or last median wont be calculated
-            currentYValues.append(int(yValues[i]))
-        
-        else:
-            medianX.append(int(currentX))
-            medianY.append(stats.median(currentYValues))
-
-            # update for different xValues
-            currentX = xValues[i]
-            currentYValues = []
-            
-    return medianX, medianY
+    return list(value_map.keys()), list(value_map.values()) 
 
 
 
@@ -106,13 +95,11 @@ plt.ylabel(titlesAndAxisLabels[1][2])
 
 for path in getAllFiles():
     id, label, xValues, yValues = extractCSV(path)
-
     xMedian, yMedian = makeMedian(xValues, yValues)
 
     if id == 0: # steps over time
         plt.figure(SoT)
-        plt.plot(xMedian, yMedian, label=label)
-    
+        plt.plot(xMedian, yMedian, marker='o', label=label)
     
     
     elif id == 1: # clients over time
@@ -121,6 +108,10 @@ for path in getAllFiles():
 
     # elif id == 2: # TODO erweiterung
 
+
+# gitter setzen
+plt.figure(SoT)
+plt.grid()
 
 # legende setzen
 plt.figure(SoT)
