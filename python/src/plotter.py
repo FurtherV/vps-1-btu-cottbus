@@ -77,6 +77,7 @@ SoT = plt.figure('Steps over Time')
 plt.title(titlesAndAxisLabels[0][0])
 plt.xlabel(titlesAndAxisLabels[0][1])
 plt.ylabel(titlesAndAxisLabels[0][2])   
+plt.grid(True)
 
 
 
@@ -85,6 +86,7 @@ CoT = plt.figure('Clients over Time')
 plt.title(titlesAndAxisLabels[1][0])
 plt.xlabel(titlesAndAxisLabels[1][1])
 plt.ylabel(titlesAndAxisLabels[1][2])
+plt.grid(True)
 
 
 
@@ -136,6 +138,14 @@ start, end = axes.get_xlim()
 start = 0
 axes.xaxis.set_ticks(np.arange(start, end, 1))
 
+
+# size of plots
+figHeight = 7
+figWidth = 10
+SoT.set_figheight(figHeight)
+SoT.set_figwidth(figWidth)
+CoT.set_figheight(figHeight)
+CoT.set_figwidth(figWidth)
 
 
 # save plots
