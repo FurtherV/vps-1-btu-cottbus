@@ -140,8 +140,8 @@ axes.xaxis.set_ticks(np.arange(start, end, 1))
 
 
 # size of plots
-figHeight = 7
-figWidth = 10
+figHeight = 9
+figWidth = 16
 SoT.set_figheight(figHeight)
 SoT.set_figwidth(figWidth)
 CoT.set_figheight(figHeight)
@@ -149,8 +149,8 @@ CoT.set_figwidth(figWidth)
 
 
 # save plots
-SoT.savefig('python/src/fig/steps-over-time.png')
-CoT.savefig('python/src/fig/clients-over-time.png')
+SoT.savefig('python/src/fig/steps-over-time.pdf')
+CoT.savefig('python/src/fig/clients-over-time.pdf')
 # elif id == 2: # TODO erweiterung
 
 plt.show()
