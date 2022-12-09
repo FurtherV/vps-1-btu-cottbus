@@ -44,10 +44,9 @@ def export(timings: Dict[int, List[int]], name: str) -> None:
 
 
 def benchmark_mpi(
-    steps: List[int], repeat: int, client_count: int
+    steps: List[int], repeat: int, board_file: str, client_count: int
 ) -> Dict[int, List[int]]:
     executable_path = "bin/mpi"
-    board_path = "boards/bigun.rle"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
 
@@ -63,7 +62,7 @@ def benchmark_mpi(
                     str(client_count),
                     executable_path,
                     "-i",
-                    board_path,
+                    board_file,
                     "-r",
                     str(step),
                     "--profile",
@@ -80,11 +79,10 @@ def benchmark_mpi(
 
 
 def benchmark_server(
-    steps: List[int], repeat: int, client_count: int, network_type: int
+    steps: List[int], repeat: int, board_file: str, client_count: int, network_type: int
 ) -> Dict[int, List[int]]:
     executable_server_path = "bin/server"
     executable_client_path = "bin/client"
-    board_path = "boards/bigun.rle"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
     for step in steps:
@@ -100,7 +98,7 @@ def benchmark_server(
                 [
                     executable_server_path,
                     "-i",
-                    board_path,
+                    board_file,
                     "-r",
                     str(step),
                     "--profile",
@@ -120,9 +118,10 @@ def benchmark_server(
     return timings
 
 
-def benchmark_local(steps: List[int], repeat: int) -> Dict[int, List[int]]:
+def benchmark_local(
+    steps: List[int], repeat: int, board_file: str
+) -> Dict[int, List[int]]:
     executable_path = "bin/local"
-    board_path = "boards/bigun.rle"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
 
@@ -135,7 +134,7 @@ def benchmark_local(steps: List[int], repeat: int) -> Dict[int, List[int]]:
                 [
                     executable_path,
                     "-i",
-                    board_path,
+                    board_file,
                     "-r",
                     str(step),
                     "--profile",
@@ -166,24 +165,25 @@ if __name__ == "__main__":
     logging.info("Log Folder cleared.")
 
     steps = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    repeat = 1
+    repeat = 5
+    board_file = "boards/bigun.rle"
     logging.info(f"Steps: {steps} repeated {repeat} times.")
 
-    timings_local = benchmark_local(steps, repeat)
+    timings_local = benchmark_local(steps, repeat, board_file)
     export(timings_local, "steps_over_time/local.csv")
     logging.info("Local Benchmark done.")
 
     for i in range(2, 9):
-        timings_mpi = benchmark_mpi(steps, repeat, i)
-        export(timings_mpi, f"steps_over_time/mpi_{i}.csv")
-        logging.info(f"MPI Benchmark with {i} nodes done.")
+        timings_mpi = benchmark_mpi(steps, repeat, board_file, i)
+        export(timings_mpi, f"steps_over_time/mpi_{i-1}.csv")
+        logging.info(f"MPI Benchmark with {i-1} clients done.")
 
     for i in range(1, 8):
-        timings_server = benchmark_server(steps, repeat, i, 0)
+        timings_server = benchmark_server(steps, repeat, board_file, i, 0)
         export(timings_server, f"steps_over_time/server_udp_{i}.csv")
         logging.info(f"UDP Benchmark with {i} clients done.")
 
     for i in range(1, 8):
-        timings_server = benchmark_server(steps, repeat, i, 0)
+        timings_server = benchmark_server(steps, repeat, board_file, i, 1)
         export(timings_server, f"steps_over_time/server_tcp_{i}.csv")
         logging.info(f"TCP Benchmark with {i} clients done.")
