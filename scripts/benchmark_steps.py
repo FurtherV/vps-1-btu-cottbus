@@ -5,6 +5,7 @@ import pathlib
 import os
 import logging
 import sys
+import numpy as np
 
 
 def clear_logs(log_folder: str = "logs/"):
@@ -26,16 +27,15 @@ def launch_process(args: List[str], log_file: str, log_folder: str = "logs/"):
     return pipe
 
 
-def export(timings: Dict[int, List[int]], name: str) -> None:
+def export(timings: Dict[int, List[int]], file_path: str, label: str) -> None:
     benchmark_folder = "benchmarks/"
-    benchmark_file = benchmark_folder + name
-    benchmark_file_name = benchmark_file.split("/")[-1]
-    pathlib.Path(benchmark_file).parent.mkdir(parents=True, exist_ok=True)
-
-    handle = open(benchmark_file, "w")
+    os.makedirs(
+        os.path.dirname(os.path.join(benchmark_folder, file_path)), exist_ok=True
+    )
+    handle = open(os.path.join(benchmark_folder, file_path), "w")
     handle.write("# x,y\n")
     handle.write("# steps, time in milliseconds\n")
-    handle.write(f"header,0,{benchmark_file_name}\n")
+    handle.write(f"header,0,{label}\n")
     for key, value in timings.items():
         handle.write(",".join([str(key)] + [str(x) for x in value]))
         handle.write("\n")
@@ -43,110 +43,100 @@ def export(timings: Dict[int, List[int]], name: str) -> None:
     return None
 
 
+def import_timings_from_file(timings: Dict[int, List[int]], file_path: str):
+    data = np.loadtxt(file_path, dtype=int, delimiter=",", ndmin=2)
+    for row in data:
+        step = row[0] + 1
+        time = max(row[1], 1)
+        if not step in timings:
+            timings[step] = [time]
+        else:
+            timings[step].append(time)
+    return None
+
+
 def benchmark_mpi(
-    steps: List[int], repeat: int, board_file: str, client_count: int
+    steps: int, repeat: int, board_file: str, client_count: int
 ) -> Dict[int, List[int]]:
     executable_path = "bin/mpi"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
 
-    for step in steps:
-        if step not in timings:
-            timings[step] = []
-
-        for _ in range(repeat):
-            pipe = launch_process(
-                [
-                    "mpirun",
-                    "-np",
-                    str(client_count),
-                    executable_path,
-                    "-i",
-                    board_file,
-                    "-r",
-                    str(step),
-                    "--profile",
-                    benchmark_temp_path,
-                ],
-                "mpi.log",
-            )
-            pipe.communicate()
-            handle = open(benchmark_temp_path, "r")
-            timing = max(1, int(handle.read()))
-            handle.close()
-            timings[step].append(timing)
+    for _ in range(repeat):
+        pipe = launch_process(
+            [
+                "mpirun",
+                "-np",
+                str(client_count),
+                executable_path,
+                "-i",
+                board_file,
+                "-r",
+                str(steps),
+                "--profile",
+                benchmark_temp_path,
+            ],
+            "mpi.log",
+        )
+        pipe.communicate()
+        import_timings_from_file(timings, benchmark_temp_path)
     return timings
 
 
 def benchmark_server(
-    steps: List[int], repeat: int, board_file: str, client_count: int, network_type: int
+    steps: int, repeat: int, board_file: str, client_count: int, network_type: int
 ) -> Dict[int, List[int]]:
     executable_server_path = "bin/server"
     executable_client_path = "bin/client"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
-    for step in steps:
-        if step not in timings:
-            timings[step] = []
-        for _ in range(repeat):
-            for i in range(client_count):
-                launch_process(
-                    [executable_client_path, "-n", str(network_type)], f"client_{i}.log"
-                )
-
-            pipe = launch_process(
-                [
-                    executable_server_path,
-                    "-i",
-                    board_file,
-                    "-r",
-                    str(step),
-                    "--profile",
-                    benchmark_temp_path,
-                    "-c",
-                    str(client_count),
-                    "-n",
-                    str(network_type),
-                ],
-                "server.log",
+    for _ in range(repeat):
+        for i in range(client_count):
+            launch_process(
+                [executable_client_path, "-n", str(network_type)], f"client_{i}.log"
             )
-            pipe.communicate()
-            handle = open(benchmark_temp_path, "r")
-            timing = max(1, int(handle.read()))
-            handle.close()
-            timings[step].append(timing)
+
+        pipe = launch_process(
+            [
+                executable_server_path,
+                "-i",
+                board_file,
+                "-r",
+                str(steps),
+                "--profile",
+                benchmark_temp_path,
+                "-c",
+                str(client_count),
+                "-n",
+                str(network_type),
+            ],
+            "server.log",
+        )
+        pipe.communicate()
+        import_timings_from_file(timings, benchmark_temp_path)
     return timings
 
 
-def benchmark_local(
-    steps: List[int], repeat: int, board_file: str
-) -> Dict[int, List[int]]:
+def benchmark_local(steps: int, repeat: int, board_file: str) -> Dict[int, List[int]]:
     executable_path = "bin/local"
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
 
-    for step in steps:
-        if step not in timings:
-            timings[step] = []
-
-        for _ in range(repeat):
-            pipe = launch_process(
-                [
-                    executable_path,
-                    "-i",
-                    board_file,
-                    "-r",
-                    str(step),
-                    "--profile",
-                    benchmark_temp_path,
-                ],
-                "local.log",
-            )
-            pipe.communicate()
-            handle = open(benchmark_temp_path, "r")
-            timing = max(1, int(handle.read()))
-            handle.close()
-            timings[step].append(timing)
+    for _ in range(repeat):
+        pipe = launch_process(
+            [
+                executable_path,
+                "-i",
+                board_file,
+                "-r",
+                str(steps),
+                "--profile",
+                benchmark_temp_path,
+            ],
+            "local.log",
+        )
+        pipe.communicate()
+        import_timings_from_file(timings, benchmark_temp_path)
     return timings
 
 
@@ -164,26 +154,26 @@ if __name__ == "__main__":
     clear_logs()
     logging.info("Log Folder cleared.")
 
-    steps = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    repeat = 5
+    steps = 1
+    repeat = 1
     board_file = "boards/bigun.rle"
     logging.info(f"Steps: {steps} repeated {repeat} times.")
 
     timings_local = benchmark_local(steps, repeat, board_file)
-    export(timings_local, "steps_over_time/local.csv")
+    export(timings_local, "steps_over_time/local.csv", "Local")
     logging.info("Local Benchmark done.")
 
     for i in range(2, 9):
         timings_mpi = benchmark_mpi(steps, repeat, board_file, i)
-        export(timings_mpi, f"steps_over_time/mpi_{i-1}.csv")
+        export(timings_mpi, f"steps_over_time/mpi_{i-1}.csv", f"MPI {i-1}")
         logging.info(f"MPI Benchmark with {i-1} clients done.")
 
     for i in range(1, 8):
         timings_server = benchmark_server(steps, repeat, board_file, i, 0)
-        export(timings_server, f"steps_over_time/server_udp_{i}.csv")
+        export(timings_server, f"steps_over_time/server_udp_{i}.csv", f"UDP {i}")
         logging.info(f"UDP Benchmark with {i} clients done.")
 
     for i in range(1, 8):
         timings_server = benchmark_server(steps, repeat, board_file, i, 1)
-        export(timings_server, f"steps_over_time/server_tcp_{i}.csv")
+        export(timings_server, f"steps_over_time/server_tcp_{i}.csv", f"TCP {i}")
         logging.info(f"TCP Benchmark with {i} clients done.")
