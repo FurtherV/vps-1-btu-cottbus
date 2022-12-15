@@ -27,7 +27,7 @@ def launch_process(args: List[str], log_file: str, log_folder: str = "logs/"):
     return pipe
 
 
-def export(timings: Dict[int, List[int]], file_path: str, label: str) -> None:
+def export(timings: Dict[int, List[int]], file_path: str, header_text: str) -> None:
     benchmark_folder = "benchmarks/"
     os.makedirs(
         os.path.dirname(os.path.join(benchmark_folder, file_path)), exist_ok=True
@@ -35,7 +35,7 @@ def export(timings: Dict[int, List[int]], file_path: str, label: str) -> None:
     handle = open(os.path.join(benchmark_folder, file_path), "w")
     handle.write("# x,y\n")
     handle.write("# steps, time in milliseconds\n")
-    handle.write(f"header,0,{label}\n")
+    handle.write(f"HEADER,{header_text}\n")
     for key, value in timings.items():
         handle.write(",".join([str(key)] + [str(x) for x in value]))
         handle.write("\n")
@@ -188,20 +188,20 @@ if __name__ == "__main__":
     logging.info(f"Steps: {steps} repeated {repeat} times.")
 
     timings_local = benchmark_local(steps, repeat, board_file)
-    export(timings_local, "steps_over_time/local.csv", "Local")
+    export(timings_local, "steps_over_time/local.csv", "Local,1")
     logging.info("Local Benchmark done.")
 
     for i in range(1, nodes):
         timings_mpi = benchmark_mpi(steps, repeat, board_file, i)
-        export(timings_mpi, f"steps_over_time/mpi_{i}.csv", f"MPI {i}")
+        export(timings_mpi, f"steps_over_time/mpi_{i}.csv", f"MPI,{i}")
         logging.info(f"MPI Benchmark with {i} clients done.")
 
     for i in range(1, nodes):
         timings_server = benchmark_server(steps, repeat, board_file, i, 0)
-        export(timings_server, f"steps_over_time/server_udp_{i}.csv", f"UDP {i}")
+        export(timings_server, f"steps_over_time/server_udp_{i}.csv", f"UDP,{i}")
         logging.info(f"UDP Benchmark with {i} clients done.")
 
     for i in range(1, nodes):
         timings_server = benchmark_server(steps, repeat, board_file, i, 1)
-        export(timings_server, f"steps_over_time/server_tcp_{i}.csv", f"TCP {i}")
+        export(timings_server, f"steps_over_time/server_tcp_{i}.csv", f"TCP,{i}")
         logging.info(f"TCP Benchmark with {i} clients done.")
