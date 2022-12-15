@@ -1,10 +1,9 @@
 #ifndef BOARDSERVER_H
 #define BOARDSERVER_H
 
-#include <vector>
-
 #include "board/Board.h"
 #include "misc/Log.h"
+#include "misc/Stopwatch.h"
 #include "net/BarrierMessage.h"
 #include "net/BoardGetMessage.h"
 #include "net/BoardSetMessage.h"
@@ -13,6 +12,7 @@
 #include "net/LogonMessage.h"
 #include "net/Message.h"
 #include <bits/stdc++.h>
+#include <vector>
 
 struct ClientInfo {
     int client_id = -1;
@@ -42,6 +42,8 @@ class BoardServer {
 
     void start();
 
+    Stopwatch get_profiler() { return stopwatch; }
+
   private:
     IPNetwork *net;                    // network object used for communication
     size_t client_count;               // amount of required clients
@@ -50,6 +52,7 @@ class BoardServer {
     int timestep = 0;                  // current timestep
     int timesteps;                     // how many timesteps we are going to simulate in total
     std::vector<ClientInfo *> clients; // list of clients
+    Stopwatch stopwatch;
 
     /**
      * This function is called, when a client connects to the server for the first time.

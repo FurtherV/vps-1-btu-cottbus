@@ -1,6 +1,7 @@
 #include "board/LocalBoard.h"
 #include "gui/BoardDrawingWindow.h"
 #include "misc/Log.h"
+#include "misc/Stopwatch.h"
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <fstream>
@@ -37,15 +38,15 @@ int main(int argc, char *argv[]) {
 
     // define available arguments
     po::options_description desc("Usage", 1024, 512);
-    desc.add_options()                                                                                         //
-        ("help,", "Print help message")                                                                        //
-        ("input,i", po::value<string>()->default_value(""), "Input file\nMust be in the correct .rle format")  //
-        ("output,o", po::value<string>()->default_value(""), "Output file\nExisting files will be overwriten") //
-        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                    //
-        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")        //
-        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")      //
-        ("profile,", po::value<string>(), "Output file for profiler\nNot compatible with -g")                  //
-        ("gui,g", "Enable GUI");                                                                               //
+    desc.add_options()                                                                                                //
+        ("help,", "Print help message")                                                                               //
+        ("input,i", po::value<string>()->default_value(""), "Input file\nMust be in the correct .rle format")         //
+        ("output,o", po::value<string>()->default_value(""), "Output file\nExisting files will be overwriten")        //
+        ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                                           //
+        ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")               //
+        ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i")             //
+        ("profile,", po::value<string>()->default_value(""), "Output path for the profiler\n Not compatible with -g") //
+        ("gui,g", "Enable GUI");                                                                                      //
 
     // read arguments
     po::variables_map vm;
@@ -112,14 +113,16 @@ int main(int argc, char *argv[]) {
             cin.get();
         }
     } else {
-        auto start = chrono::high_resolution_clock::now();
+        Stopwatch stopwatch;
         for (int i = 0; i < simulation_steps; i++) {
+            if (i == 0)
+                stopwatch.start();
             board->step();
+            stopwatch.stop();
         }
-        auto end = chrono::high_resolution_clock::now();
+
         if (vm.count("profile")) {
-            long time = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            write_benchmark_file(vm["profile"].as<string>(), time);
+            stopwatch.to_file(vm["profile"].as<string>());
         }
     }
 

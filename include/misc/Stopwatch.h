@@ -19,7 +19,7 @@ class Stopwatch {
     void start() { start_time_point = std::chrono::high_resolution_clock::now(); };
 
     /**
-     * @brief Stops measuring time and records measured time as milliseconds in a vector.
+     * @brief Records measured time in milliseconds.
      * @return measured time in milliseconds.
      */
     long stop() {
@@ -31,15 +31,15 @@ class Stopwatch {
     };
 
     /**
-     * @brief Writes all measured timings to a file, each timing is on its own line.
+     * @brief Writes all measured timings to a csv file, each prefixed with their stop index, each on their own line.
      * @param path Path to the file
      */
     void to_file(std::string path) {
         std::ofstream csv;
         csv.open(path, ios::out | ios::trunc);
         if (csv.is_open()) {
-            for (auto element : timings) {
-                csv << element << "\n";
+            for (size_t index = 0; index < timings.size(); index++) {
+                csv << index << "," << timings[index] << "\n";
             }
             csv.close();
         }

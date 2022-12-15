@@ -137,12 +137,10 @@ int main(int argc, char **argv) {
     }
 
     BoardServer *board_server = new BoardServer(net, client_count, board_read, board_write, simulation_steps);
-    auto start = chrono::high_resolution_clock::now();
     board_server->start();
-    auto end = chrono::high_resolution_clock::now();
+
     if (vm.count("profile")) {
-        long time = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        write_benchmark_file(vm["profile"].as<string>(), time);
+        board_server->get_profiler().to_file(vm["profile"].as<string>());
     }
 
     if (!vm["output"].defaulted()) {

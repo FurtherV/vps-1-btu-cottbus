@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
         ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")   //
         ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i") //
         ("profile,", po::value<string>(), "Output file for profiler")                                     //
-        ("mode,m", po::value<string>()->default_value("simple"),
+        ("mode,m", po::value<string>()->default_value("advanced"),
          "MPI Mode, one of:\n  simple) For homogenous systems\n  advanced) For heterogenous systems"); //
 
     // read arguments and store in a map
@@ -110,14 +110,10 @@ int main(int argc, char **argv) {
 
             if (mode == "advanced") {
                 BoardServerMPIAdvanced server = BoardServerMPIAdvanced(board_read, board_write, simulation_steps);
-                stopwatch.start();
-                server.start();
-                stopwatch.stop();
+                server.start(&stopwatch);
             } else {
                 BoardServerMPISimple server = BoardServerMPISimple(board_read, board_write, simulation_steps);
-                stopwatch.start();
-                server.start();
-                stopwatch.stop();
+                server.start(&stopwatch);
             }
 
             if (output_path.length() > 0) {

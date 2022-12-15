@@ -19,9 +19,10 @@ class BoardServerMPISimple : public BoardServerMPI {
     virtual ~BoardServerMPISimple();
 
     /**
-     * @brief Starts the server.
+     * @brief Starts the server with an optional stopwatch for profiling.
+     * @param stopwatch Stopwatch used for profiling.
      */
-    void start();
+    void start(Stopwatch *stopwatch = nullptr);
 
   private:
     void swap_boards();

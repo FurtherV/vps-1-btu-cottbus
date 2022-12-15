@@ -1,12 +1,17 @@
 #include "board/BoardServerMPIAdvanced.h"
 #include "misc/Log.h"
+#include "misc/Stopwatch.h"
 
 BoardServerMPIAdvanced::BoardServerMPIAdvanced(Board *board_read, Board *board_write, int timesteps)
     : board_read(board_read), board_write(board_write), timesteps(timesteps) {}
 
 BoardServerMPIAdvanced::~BoardServerMPIAdvanced() {}
 
-void BoardServerMPIAdvanced::start() {
+void BoardServerMPIAdvanced::start(Stopwatch *stopwatch) {
+    if (stopwatch != nullptr) {
+        stopwatch->start();
+    }
+
     broadcast_timesteps();
     LOG(INFO) << "[SERVER] "
               << "Sending initial areas";
@@ -35,6 +40,9 @@ void BoardServerMPIAdvanced::start() {
 
         board_read->setCurrentStep(current_timestep);
         board_write->setCurrentStep(current_timestep);
+        if (stopwatch != nullptr) {
+            stopwatch->stop();
+        }
     }
     LOG(INFO) << "[SERVER] "
               << "Simulation done.";

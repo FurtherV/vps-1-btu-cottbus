@@ -23,11 +23,13 @@ BoardServer::~BoardServer() {
 };
 
 void BoardServer::start() {
+    stopwatch.start();
     LOG(INFO) << "Server started, using exactly " << client_count << " client(s) to calculate " << timesteps
               << " cycle(s)";
 
     IPAddress client_address = IPAddress();
     while (timestep < timesteps) {
+
         client_address.setAddr(0);
         client_address.setPort(0);
 
@@ -140,6 +142,7 @@ void BoardServer::barrier(int client_id, unsigned int barrier_sequence_number, i
     }
     board_write->clear();
     notifyAll();
+    stopwatch.stop();
 };
 
 void BoardServer::notify(int client_id) {
