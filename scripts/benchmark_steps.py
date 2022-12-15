@@ -67,7 +67,7 @@ def benchmark_mpi(
             [
                 "mpirun",
                 "-np",
-                str(client_count),
+                str(client_count + 1),
                 executable_path,
                 "-i",
                 board_file,
@@ -141,6 +141,33 @@ def benchmark_local(steps: int, repeat: int, board_file: str) -> Dict[int, List[
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument(
+        "--nodes",
+        type=int,
+        default=8,
+        help="Number of nodes / processors used for computation\nDefault: 8",
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=100,
+        help="Amount of steps to be simulated\nDefault: 100",
+    )
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=10,
+        help="How many times a step is repeated\nDefault: 10",
+    )
+    parser.add_argument(
+        "--board",
+        type=str,
+        default="boards/bigun.rle",
+        help="Path to a RLE board file\nDefault: boards/bigun.rle",
+    )
+    args = parser.parse_args()
+
     logFormatter = logging.Formatter(
         "%(asctime)s [%(threadName)s] [%(levelname)s]:  %(message)s"
     )
@@ -154,26 +181,27 @@ if __name__ == "__main__":
     clear_logs()
     logging.info("Log Folder cleared.")
 
-    steps = 1
-    repeat = 1
-    board_file = "boards/bigun.rle"
+    nodes = args.nodes
+    steps = args.steps
+    repeat = args.repeat
+    board_file = args.board
     logging.info(f"Steps: {steps} repeated {repeat} times.")
 
     timings_local = benchmark_local(steps, repeat, board_file)
     export(timings_local, "steps_over_time/local.csv", "Local")
     logging.info("Local Benchmark done.")
 
-    for i in range(2, 9):
+    for i in range(1, nodes):
         timings_mpi = benchmark_mpi(steps, repeat, board_file, i)
-        export(timings_mpi, f"steps_over_time/mpi_{i-1}.csv", f"MPI {i-1}")
-        logging.info(f"MPI Benchmark with {i-1} clients done.")
+        export(timings_mpi, f"steps_over_time/mpi_{i}.csv", f"MPI {i}")
+        logging.info(f"MPI Benchmark with {i} clients done.")
 
-    for i in range(1, 8):
+    for i in range(1, nodes):
         timings_server = benchmark_server(steps, repeat, board_file, i, 0)
         export(timings_server, f"steps_over_time/server_udp_{i}.csv", f"UDP {i}")
         logging.info(f"UDP Benchmark with {i} clients done.")
 
-    for i in range(1, 8):
+    for i in range(1, nodes):
         timings_server = benchmark_server(steps, repeat, board_file, i, 1)
         export(timings_server, f"steps_over_time/server_tcp_{i}.csv", f"TCP {i}")
         logging.info(f"TCP Benchmark with {i} clients done.")
