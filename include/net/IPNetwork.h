@@ -24,7 +24,7 @@ class IPNetwork {
      * @return the length of the received message
      */
     virtual ssize_t request(const Server &server, void *req, size_t reqlen, void *res, size_t reslen,
-                            int timeout = 5) = 0;
+                            int timeout = 1) = 0;
 
     /**
      * Wait the whole time for a message that arrives at a specified port.

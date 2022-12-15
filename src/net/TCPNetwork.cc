@@ -71,7 +71,7 @@ ssize_t TCPNetwork::request(const Server &server, void *req, size_t reqlen, void
         while (connect(socket_fd, (const sockaddr *)&server, server_address_len) != 0) {
             if (errno == ECONNREFUSED) {
                 LOG(INFO) << "Server does not exist, waiting...";
-                sleep(2);
+                sleep(timeout);
             } else {
                 throw std::system_error(errno, std::generic_category(), "Could not connect to the server");
             }

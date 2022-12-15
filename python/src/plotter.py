@@ -30,11 +30,13 @@ def extractCSV(path):
     return id, label, xValues, yValues
 
 
-def makeMedian(xValues, yValues):
+def makeMedian(xValues, yValues, x_y_predicate=None):
     value_map = {}
     for i in range(min(len(xValues), len(yValues))):
         x_value = float(xValues[i])
         y_value = float(yValues[i])
+        if x_y_predicate is not None and not x_y_predicate(x_value, y_value):
+            continue
         if not x_value in value_map:
             value_map[x_value] = []
         value_map[x_value].append(y_value)
@@ -86,14 +88,19 @@ SoT_xTicks = []
 for path in getAllFiles():
     print(f"plotting file {path}")
     id, label, xValues, yValues = extractCSV(path)
-    xMedian, yMedian = makeMedian(xValues, yValues)
 
     if id == 0:  # steps over time
+
+        def x_y_predicate(x, y):
+            return x % 5 == 0
+
+        xMedian, yMedian = makeMedian(xValues, yValues, x_y_predicate)
         plt.figure(SoT)
         plt.plot(xMedian, yMedian, marker="o", label=label)
         SoT_xTicks.extend(xMedian)
 
     elif id == 1:  # clients over time
+        xMedian, yMedian = makeMedian(xValues, yValues)
         plt.figure(CoT)
         plt.plot(xMedian, yMedian, marker="o", label=label)
 

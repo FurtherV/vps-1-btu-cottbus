@@ -42,7 +42,7 @@ class TCPNetwork : IPNetwork {
      * @param timeout is the time (in seconds) that we wait for an answer
      * @return On success, the length of the received message is returned. On error, -1 is returned.
      */
-    ssize_t request(const Server &server, void *req, size_t reqlen, void *res, size_t reslen, int timeout = 5);
+    ssize_t request(const Server &server, void *req, size_t reqlen, void *res, size_t reslen, int timeout = 1);
 
     /**
      * Wait the whole time for a message that arrives at a specified port.
