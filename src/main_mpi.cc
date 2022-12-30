@@ -1,8 +1,6 @@
-#include "board/BoardServerMPIAdvanced.h"
-#include "board/BoardServerMPISimple.h"
+#include "board/BoardServerMPI.h"
 #include "board/LocalBoard.h"
-#include "client/LifeClientMPIAdvanced.h"
-#include "client/LifeClientMPISimple.h"
+#include "client/LifeClientMPI.h"
 #include "misc/Log.h"
 #include "misc/Stopwatch.h"
 #include <algorithm>
@@ -31,9 +29,7 @@ int main(int argc, char **argv) {
         ("steps,r", po::value<int>()->default_value(1), "Simulation steps")                               //
         ("width,w", po::value<int>()->default_value(100), "Width of the board\nNot compatible with -i")   //
         ("height,h", po::value<int>()->default_value(100), "Height of the board\nNot compatible with -i") //
-        ("profile,", po::value<string>(), "Output file for profiler")                                     //
-        ("mode,m", po::value<string>()->default_value("advanced"),
-         "MPI Mode, one of:\n  simple) For homogenous systems\n  advanced) For heterogenous systems"); //
+        ("profile,", po::value<string>(), "Output file for profiler");                                    //
 
     // read arguments and store in a map
     po::variables_map vm;
@@ -68,8 +64,6 @@ int main(int argc, char **argv) {
     if (vm.count("profile")) {
         profiler_output = vm["profile"].as<std::string>();
     }
-    string mode = vm["mode"].as<std::string>();
-    std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) { return std::tolower(c); });
 
     // validate arguments
     if (simulation_steps <= 0) {
@@ -84,21 +78,24 @@ int main(int argc, char **argv) {
         LOG(ERROR) << "'height' must be greater than 0, was '" << board_height << "'";
         return 1;
     }
-    if ((mode != "simple") && (mode != "advanced")) {
-        LOG(ERROR) << "'mode' must be 'simple' or 'advanced', was '" << mode << "'";
-        return 1;
-    }
 
-    MPI::Init(argc, argv);
+    MPI_Init(&argc, &argv);
 
     try {
         // main code here
         int server_rank = 0;
-        if (MPI::COMM_WORLD.Get_size() <= 1) {
+
+        int mpi_nodes = 0;
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_nodes);
+
+        if (mpi_nodes <= 1) {
             throw std::runtime_error("This application requires at least two slots!");
         }
 
-        if (MPI::COMM_WORLD.Get_rank() == server_rank) {
+        int my_rank = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+        if (my_rank == server_rank) {
             // is server
             LocalBoard *board_read = new LocalBoard(board_width, board_height);
             board_read->importAll(input_path);
@@ -108,13 +105,8 @@ int main(int argc, char **argv) {
 
             Stopwatch stopwatch;
 
-            if (mode == "advanced") {
-                BoardServerMPIAdvanced server = BoardServerMPIAdvanced(board_read, board_write, simulation_steps);
-                server.start(&stopwatch);
-            } else {
-                BoardServerMPISimple server = BoardServerMPISimple(board_read, board_write, simulation_steps);
-                server.start(&stopwatch);
-            }
+            BoardServerMPI server = BoardServerMPI(board_read, board_write, simulation_steps);
+            server.start(&stopwatch);
 
             if (output_path.length() > 0) {
                 board_read->exportAll(output_path);
@@ -128,22 +120,16 @@ int main(int argc, char **argv) {
             delete board_write;
         } else {
             // is client
-
-            if (mode == "advanced") {
-                LifeClientMPIAdvanced client = LifeClientMPIAdvanced(server_rank);
-                client.start();
-            } else {
-                LifeClientMPISimple client = LifeClientMPISimple(server_rank);
-                client.start();
-            }
+            LifeClientMPI client = LifeClientMPI(server_rank);
+            client.start();
         }
     } catch (const std::exception &e) {
         // error handling here
         LOG(ERROR) << e.what();
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
-    MPI::Finalize();
+    MPI_Finalize();
     return 0;
 }

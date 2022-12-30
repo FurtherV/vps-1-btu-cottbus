@@ -1,19 +1,19 @@
-#ifndef LIFECLIENTMPIADVANCED_H
-#define LIFECLIENTMPIADVANCED_H
+#ifndef LIFECLIENTMPI_H
+#define LIFECLIENTMPI_H
 
 #include "board/LocalBoard.h"
 #include <mpi.h>
 
-class LifeClientMPIAdvanced {
+class LifeClientMPI {
   public:
     /**
      * @brief Creates a client which will help a server simulate the Game of Life by simulating portions of the overall
      * board.
      * @param root_rank rank / id of the server, usually 0
      */
-    LifeClientMPIAdvanced(int root_rank);
+    LifeClientMPI(int root_rank);
 
-    virtual ~LifeClientMPIAdvanced();
+    virtual ~LifeClientMPI();
 
     /**
      * @brief Starts the client.

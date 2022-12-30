@@ -91,11 +91,6 @@ def benchmark_server(
     benchmark_temp_path = "benchmarks/temp.csv"
     timings = {}
     for _ in range(repeat):
-        for i in range(client_count):
-            launch_process(
-                [executable_client_path, "-n", str(network_type)], f"client_{i}.log"
-            )
-
         pipe = launch_process(
             [
                 executable_server_path,
@@ -112,6 +107,10 @@ def benchmark_server(
             ],
             "server.log",
         )
+        for i in range(client_count):
+            launch_process(
+                [executable_client_path, "-n", str(network_type)], f"client_{i}.log"
+            )
         pipe.communicate()
         import_timings_from_file(timings, benchmark_temp_path)
     return timings

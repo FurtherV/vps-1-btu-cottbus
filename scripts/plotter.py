@@ -165,19 +165,19 @@ if __name__ == "__main__":
     logging.info(f"Plotting files: {input_files}")
     logging.info(f"Output will be placed in: {output_folder}")
 
-    storage: Dict[str, Dict[int, Dict[int, List[int]]]] = {}
+    data_storage: Dict[str, Dict[int, Dict[int, List[int]]]] = {}
     for input_file in input_files:
         header, data = import_data(input_file)
         type, nodes = parse_header(header)
-        if type not in storage:
-            storage[type] = {}
-        if nodes not in storage[type]:
-            storage[type][nodes] = {}
-        storage[type][nodes] = data
+        if type not in data_storage:
+            data_storage[type] = {}
+        if nodes not in data_storage[type]:
+            data_storage[type][nodes] = {}
+        data_storage[type][nodes] = data
 
-    plot_steps_time_seperate(storage, output_folder)
-    plot_steps_time_combined(storage, output_folder)
-    plot_clients_time_combined(storage, output_folder)
+    plot_steps_time_seperate(data_storage, output_folder)
+    plot_steps_time_combined(data_storage, output_folder)
+    plot_clients_time_combined(data_storage, output_folder)
 
     if args.show:
         plt.show()
