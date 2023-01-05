@@ -243,7 +243,7 @@ if __name__ == "__main__":
     logging.info("Local Benchmark done.")
 
     for i in range(1, nodes):
-        timings_mpi = benchmark_mpi(steps, repeat, board_file, i)
+        timings_mpi = benchmark_mpi(steps, repeat, board_file, i + 1)
         export(timings_mpi, f"steps_over_time/mpi_{i}.csv", f"MPI,{i}")
         logging.info(f"MPI Benchmark with {i} clients done.")
 
@@ -258,7 +258,7 @@ if __name__ == "__main__":
         logging.info(f"TCP Benchmark with {i} clients done.")
 
     for i in range(1, nodes):
-        timings_taco_server = benchmark_taco(steps, repeat, board_file, i)
+        timings_taco_server = benchmark_taco(steps, repeat, board_file, i + 1)
         export(
             timings_taco_server,
             f"steps_over_time/taco_server_{i}.csv",

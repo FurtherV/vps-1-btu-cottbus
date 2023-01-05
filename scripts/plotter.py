@@ -45,7 +45,6 @@ def import_data(csv_file: str) -> Tuple[str, Dict[int, List[int]]]:
         if index not in data:
             data[index] = []
         data[index].extend(row[1:])
-
     return header, data
 
 
@@ -53,7 +52,7 @@ def plot_steps_time_seperate(data: Dict, output_folder: str):
     for type in data.keys():
         fig, ax = plt.subplots()
         for nodes in data[type].keys():
-            predicate = lambda x: x % 5 == 0
+            predicate = lambda x: x % 1 == 0
             x_values = [float(x) for x in data[type][nodes].keys() if predicate(x)]
             y_values = [
                 float(np.median(data[type][nodes][x])) for x in x_values if predicate(x)
@@ -73,6 +72,7 @@ def plot_steps_time_seperate(data: Dict, output_folder: str):
 
         file_name = "steps_over_time-" + str(type).lower().replace(" ", "_") + ".pdf"
         fig.savefig(output_folder + "/" + file_name)
+    logging.info("plot_steps_time_seperate() done")
     return None
 
 
@@ -87,7 +87,7 @@ def plot_steps_time_combined(data: Dict, output_folder: str):
             ax = axs[row][col]
             ax.set_title(type, loc="left")
             for nodes in data[type].keys():
-                predicate = lambda x: x % 5 == 0
+                predicate = lambda x: x % 1 == 0
                 x_values = [float(x) for x in data[type][nodes].keys() if predicate(x)]
                 y_values = [
                     float(np.median(data[type][nodes][x]))
@@ -109,6 +109,7 @@ def plot_steps_time_combined(data: Dict, output_folder: str):
 
     file_name = "steps_over_time-" + "combined".lower().replace(" ", "_") + ".pdf"
     fig.savefig(output_folder + "/" + file_name)
+    logging.info("plot_steps_time_combined() done")
     return None
 
 
@@ -122,7 +123,7 @@ def plot_clients_time_combined(data: Dict, output_folder: str):
         ]
         ax.plot(x_values, y_values, marker="o", label=f"{type}")
         ax.set_xticks(np.linspace(0, max(x_values), len(x_values) + 1))
-        ax.set_xlabel("Steps")
+        ax.set_xlabel("Clients")
         ax.set_ylabel("Time in milliseconds")
         ax.grid(True)
         ax.legend()
@@ -134,6 +135,7 @@ def plot_clients_time_combined(data: Dict, output_folder: str):
 
     file_name = "clients_over_time-" + "combined".lower().replace(" ", "_") + ".pdf"
     fig.savefig(output_folder + "/" + file_name)
+    logging.info("plot_clients_time_combined() done")
     return None
 
 
@@ -150,7 +152,7 @@ if __name__ == "__main__":
         "%(asctime)s [%(threadName)s] [%(levelname)s]:  %(message)s"
     )
     rootLogger = logging.getLogger()
-    rootLogger.setLevel(logging.DEBUG)
+    rootLogger.setLevel(logging.INFO)
 
     consoleHandler = logging.StreamHandler(sys.stdout)
     consoleHandler.setFormatter(logFormatter)
