@@ -5,6 +5,7 @@ import pathlib
 import os
 import logging
 import sys
+import socket
 import numpy as np
 
 
@@ -18,11 +19,8 @@ def clear_logs(log_folder: str = "logs/"):
     return None
 
 
-def launch_process(args: List[str], log_file: str, log_folder: str = "logs/"):
+def launch_process(args: List[str]):
     stdout = subprocess.DEVNULL
-    if log_file != "/dev/null" and log_file != "" and log_file != None:
-        pathlib.Path(log_folder).mkdir(parents=True, exist_ok=True)
-        stdout = open(log_folder + log_file, "a")
     pipe = subprocess.Popen(args, cwd=".", stdout=stdout, stderr=subprocess.STDOUT)
     return pipe
 
@@ -55,19 +53,22 @@ def import_timings_from_file(timings: Dict[int, List[int]], file_path: str):
     return None
 
 
-def benchmark_mpi(
-    steps: int, repeat: int, board_file: str, client_count: int
+def benchmark_taco(
+    steps: int, repeat: int, board_file: str, node_count: int
 ) -> Dict[int, List[int]]:
-    executable_path = "bin/mpi"
+    executable_path = "./bin/taco"
     benchmark_temp_path = "benchmarks/temp.csv"
+    hostfile_path = "~/hostfile"
     timings = {}
 
     for _ in range(repeat):
         pipe = launch_process(
             [
                 "mpirun",
-                "-np",
-                str(client_count + 1),
+                "-n",
+                str(node_count),
+                "-default-hostfile",
+                hostfile_path,
                 executable_path,
                 "-i",
                 board_file,
@@ -75,8 +76,37 @@ def benchmark_mpi(
                 str(steps),
                 "--profile",
                 benchmark_temp_path,
-            ],
-            "mpi.log",
+            ]
+        )
+        pipe.communicate()
+        import_timings_from_file(timings, benchmark_temp_path)
+    return timings
+
+
+def benchmark_mpi(
+    steps: int, repeat: int, board_file: str, node_count: int
+) -> Dict[int, List[int]]:
+    executable_path = "./bin/mpi"
+    benchmark_temp_path = "benchmarks/temp.csv"
+    hostfile_path = "~/hostfile"
+    timings = {}
+
+    for _ in range(repeat):
+        pipe = launch_process(
+            [
+                "mpirun",
+                "-n",
+                str(node_count),
+                "-default-hostfile",
+                hostfile_path,
+                executable_path,
+                "-i",
+                board_file,
+                "-r",
+                str(steps),
+                "--profile",
+                benchmark_temp_path,
+            ]
         )
         pipe.communicate()
         import_timings_from_file(timings, benchmark_temp_path)
@@ -84,46 +114,63 @@ def benchmark_mpi(
 
 
 def benchmark_server(
-    steps: int, repeat: int, board_file: str, client_count: int, network_type: int
+    steps: int, repeat: int, board_file: str, node_count: int, network_type: int
 ) -> Dict[int, List[int]]:
-    executable_server_path = "bin/server"
-    executable_client_path = "bin/client"
+    server_executable_path = "./bin/server"
+    client_executable_path = "./bin/client"
     benchmark_temp_path = "benchmarks/temp.csv"
+    hostfile_path = "~/hostfile"
+    server_host_name = socket.gethostname()
     timings = {}
+
     for _ in range(repeat):
         pipe = launch_process(
             [
-                executable_server_path,
+                server_executable_path,
                 "-i",
                 board_file,
                 "-r",
                 str(steps),
                 "--profile",
                 benchmark_temp_path,
-                "-c",
-                str(client_count),
                 "-n",
                 str(network_type),
-            ],
-            "server.log",
+            ]
         )
-        for i in range(client_count):
-            launch_process(
-                [executable_client_path, "-n", str(network_type)], f"client_{i}.log"
-            )
+
+        launch_process(
+            [
+                "mpirun",
+                "-n",
+                str(node_count),
+                "-default-hostfile",
+                hostfile_path,
+                client_executable_path,
+                "--host",
+                server_host_name,
+                "-n",
+                str(network_type),
+            ]
+        )
         pipe.communicate()
         import_timings_from_file(timings, benchmark_temp_path)
     return timings
 
 
 def benchmark_local(steps: int, repeat: int, board_file: str) -> Dict[int, List[int]]:
-    executable_path = "bin/local"
+    executable_path = "./bin/local"
     benchmark_temp_path = "benchmarks/temp.csv"
+    hostfile_path = "~/hostfile"
     timings = {}
 
     for _ in range(repeat):
         pipe = launch_process(
             [
+                "mpirun",
+                "-n",
+                "1",
+                "-default-hostfile",
+                hostfile_path,
                 executable_path,
                 "-i",
                 board_file,
@@ -131,8 +178,7 @@ def benchmark_local(steps: int, repeat: int, board_file: str) -> Dict[int, List[
                 str(steps),
                 "--profile",
                 benchmark_temp_path,
-            ],
-            "local.log",
+            ]
         )
         pipe.communicate()
         import_timings_from_file(timings, benchmark_temp_path)
@@ -140,24 +186,25 @@ def benchmark_local(steps: int, repeat: int, board_file: str) -> Dict[int, List[
 
 
 if __name__ == "__main__":
+    # initialize command line argument parser
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         "--nodes",
         type=int,
         default=8,
-        help="Number of nodes / processors used for computation\nDefault: 8",
+        help="Max number of nodes / processors used for computation\nDefault: 8",
     )
     parser.add_argument(
         "--steps",
         type=int,
-        default=100,
-        help="Amount of steps to be simulated\nDefault: 100",
+        default=10,
+        help="Amount of steps to be simulated\nDefault: 10",
     )
     parser.add_argument(
         "--repeat",
         type=int,
-        default=10,
-        help="How many times a step is repeated\nDefault: 10",
+        default=1,
+        help="How many times a step is repeated\nDefault: 1",
     )
     parser.add_argument(
         "--board",
@@ -167,6 +214,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # initialize logger
     logFormatter = logging.Formatter(
         "%(asctime)s [%(threadName)s] [%(levelname)s]:  %(message)s"
     )
@@ -177,14 +225,18 @@ if __name__ == "__main__":
     consoleHandler.setFormatter(logFormatter)
     rootLogger.addHandler(consoleHandler)
 
+    # empty logs folder
     clear_logs()
     logging.info("Log Folder cleared.")
 
+    # store cmd args in variables for easier access
     nodes = args.nodes
     steps = args.steps
     repeat = args.repeat
     board_file = args.board
     logging.info(f"Steps: {steps} repeated {repeat} times.")
+
+    # do benchmarks
 
     timings_local = benchmark_local(steps, repeat, board_file)
     export(timings_local, "steps_over_time/local.csv", "Local,1")
@@ -204,3 +256,12 @@ if __name__ == "__main__":
         timings_server = benchmark_server(steps, repeat, board_file, i, 1)
         export(timings_server, f"steps_over_time/server_tcp_{i}.csv", f"TCP,{i}")
         logging.info(f"TCP Benchmark with {i} clients done.")
+
+    for i in range(1, nodes):
+        timings_taco_server = benchmark_taco(steps, repeat, board_file, i)
+        export(
+            timings_taco_server,
+            f"steps_over_time/taco_server_{i}.csv",
+            f"TACO-Server,{i}",
+        )
+        logging.info(f"TACO-Server Benchmark with {i} clients done.")
