@@ -77,13 +77,15 @@ def plot_steps_time_seperate(data: Dict, output_folder: str):
 
 
 def plot_steps_time_combined(data: Dict, output_folder: str):
-    ncols = 2
+    ncols = 3
     nrows = 2
     fig, axs = plt.subplots(ncols=ncols, nrows=nrows, sharex=True, sharey=True)
     types = list(data.keys())
     for row in range(0, nrows):
         for col in range(0, ncols):
-            type = types[row * ncols + col]
+            type = types[-1]
+            if (row * ncols + col) < len(types):
+                type = types[row * ncols + col]
             ax = axs[row][col]
             ax.set_title(type, loc="left")
             for nodes in data[type].keys():
@@ -105,7 +107,7 @@ def plot_steps_time_combined(data: Dict, output_folder: str):
 
     # increase figure size
     fig_width, fig_height = fig.get_size_inches()
-    fig.set_size_inches(fig_width * 2, fig_height * 2)
+    fig.set_size_inches(fig_width * 3, fig_height * 3)
 
     file_name = "steps_over_time-" + "combined".lower().replace(" ", "_") + ".pdf"
     fig.savefig(output_folder + "/" + file_name)
